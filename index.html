@@ -57,7 +57,7 @@
       text-align: center;
       font-size: 13px;
       color: var(--text-muted);
-      padding: 30px 10px;
+      padding: 24px 10px;
     }
 
     .grid {
@@ -79,13 +79,14 @@
       aspect-ratio: 2 / 3;
       background: #1e293b;
       position: relative;
+      overflow: hidden;
     }
     .poster-wrap img { width: 100%; height: 100%; object-fit: cover; }
     .rate-badge {
       position: absolute;
       top: 6px;
       right: 6px;
-      background: rgba(0,0,0,0.75);
+      background: rgba(0,0,0,0.8);
       backdrop-filter: blur(4px);
       color: #fbbf24;
       font-weight: 700;
@@ -196,21 +197,21 @@
   </header>
 
   <div class="search-box">
-    <input type="text" id="search-input" placeholder="Поиск фильма (введите название)...">
+    <input type="text" id="search-input" placeholder="Введите название фильма...">
   </div>
 
-  <div id="status" class="status-msg">Загрузка фильмов...</div>
+  <div id="status" class="status-msg">Загрузка популярных фильмов...</div>
   <div class="grid" id="movies-grid"></div>
 
-  <!-- Модальное окно -->
+  <!-- Модалка скачивания -->
   <div class="modal-overlay" id="modal">
     <div class="modal-sheet">
       <div class="modal-header">
         <img src="" id="m-poster" class="modal-poster">
         <div class="modal-titles">
           <h2 id="m-title">Название</h2>
-          <p id="m-dir">Режиссёр: —</p>
-          <p id="m-rates" style="color: #fbbf24; font-weight:600; margin-top:4px;">★ TMDB: 0.0</p>
+          <p id="m-dir">Озвучка / Качество: —</p>
+          <p id="m-rates" style="color: #fbbf24; font-weight:600; margin-top:4px;">★ Рейтинг: —</p>
         </div>
       </div>
 
@@ -249,105 +250,94 @@
     const tg = window.Telegram?.WebApp;
     if (tg) tg.expand();
 
-    const TMDB_API_KEY = "3b006f1406e23b9d6a2f8b5a3e14fb5e";
-    // Используем проксирующий эндпоинт Cloudflare для обхода блокировок api.themoviedb.org
-    const PROXY_URL = "https://corsproxy.io/?url=";
-    const TMDB_BASE = "https://api.themoviedb.org/3";
-
+    const KODIK_TOKEN = "0494164a3e824c4b4a68393cb5622014";
     let selectedMovie = null;
+
     const grid = document.getElementById('movies-grid');
     const statusEl = document.getElementById('status');
     const searchInput = document.getElementById('search-input');
     const modal = document.getElementById('modal');
 
-    async function apiFetch(endpoint) {
-      const fullUrl = `${TMDB_BASE}${endpoint}`;
-      try {
-        // Пробуем прямой запрос
-        const r = await fetch(fullUrl);
-        if (r.ok) return await r.json();
-      } catch(e) {}
-
-      // Если прямой заблокирован провайдером — идём через CORS-прокси
-      const proxyReq = `${PROXY_URL}${encodeURIComponent(fullUrl)}`;
-      const res = await fetch(proxyReq);
-      return await res.json();
-    }
-
-    async function loadTrending() {
+    // Функция поиска по базе балансера
+    async function searchMovies(query) {
       statusEl.style.display = 'block';
-      statusEl.textContent = 'Загрузка новинок...';
-      try {
-        const data = await apiFetch(`/trending/movie/week?api_key=${TMDB_API_KEY}&language=ru-RU`);
-        renderMovies(data.results || []);
-      } catch (err) {
-        statusEl.textContent = 'Ошибка загрузки. Проверьте интернет-соединение.';
-      }
-    }
+      statusEl.textContent = query ? `Поиск «${query}»...` : 'Загрузка подборки...';
 
-    async function searchTMDB(query) {
-      if (!query.trim()) { loadTrending(); return; }
-      statusEl.style.display = 'block';
-      statusEl.textContent = `Поиск «${query}»...`;
+      const url = query
+        ? `https://kodikapi.com/search?token=${KODIK_TOKEN}&title=${encodeURIComponent(query)}&with_material_data=true&limit=30`
+        : `https://kodikapi.com/list?token=${KODIK_TOKEN}&types=movie&sort=year&order=desc&with_material_data=true&limit=30`;
+
       try {
-        const data = await apiFetch(`/search/movie?api_key=${TMDB_API_KEY}&language=ru-RU&query=${encodeURIComponent(query)}`);
-        const results = data.results || [];
-        if (results.length === 0) {
+        const res = await fetch(url);
+        const data = await res.json();
+        const rawResults = data.results || [];
+
+        // Убираем дубликаты одного и того же фильма с разными озвучками
+        const unique = [];
+        const seen = new Set();
+        rawResults.forEach(item => {
+          const key = (item.title || item.title_orig || '') + (item.year || '');
+          if (!seen.has(key)) {
+            seen.add(key);
+            unique.push(item);
+          }
+        });
+
+        if (unique.length === 0) {
           grid.innerHTML = '';
-          statusEl.textContent = 'Ничего не найдено. Попробуйте другое название.';
+          statusEl.textContent = 'Ничего не найдено. Проверьте правильность названия.';
         } else {
-          renderMovies(results);
+          renderMovies(unique);
         }
       } catch (err) {
-        statusEl.textContent = 'Ошибка поиска. Пробуем повторить...';
+        statusEl.textContent = 'Ошибка сети. Проверьте соединение.';
       }
     }
 
     function renderMovies(movies) {
       grid.innerHTML = '';
-      const valid = movies.filter(m => m.poster_path);
-      if (valid.length === 0) {
-        statusEl.style.display = 'block';
-        statusEl.textContent = 'Фильмы без постеров скрыты.';
-        return;
-      }
       statusEl.style.display = 'none';
 
-      valid.forEach(m => {
+      movies.forEach(m => {
+        const mat = m.material_data || {};
+        const title = m.title || m.title_orig || 'Без названия';
+        const year = m.year || mat.year || '';
+        const poster = mat.poster_url || 'https://via.placeholder.com/300x450/1e293b/94a3b8?text=Нет+постера';
+        const rate = mat.kinopoisk_rating || mat.imdb_rating || '—';
+
         const card = document.createElement('div');
         card.className = 'movie-card';
-        const year = (m.release_date || '').slice(0, 4);
-        const rate = m.vote_average ? m.vote_average.toFixed(1) : '—';
-
         card.innerHTML = `
           <div class="poster-wrap">
-            <img src="https://image.tmdb.org/t/p/w342${m.poster_path}" loading="lazy">
+            <img src="${poster}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Обложка'">
             <span class="rate-badge">★ ${rate}</span>
           </div>
           <div class="card-info">
-            <span class="card-title">${m.title}</span>
-            <span class="card-meta">${year || 'Фильм'}</span>
+            <span class="card-title">${title}</span>
+            <span class="card-meta">${year ? year + ' г.' : (m.type || 'Фильм')}</span>
           </div>
         `;
+
         card.addEventListener('click', () => openMovieDetail(m));
         grid.appendChild(card);
       });
     }
 
-    async function openMovieDetail(m) {
+    function openMovieDetail(m) {
       selectedMovie = m;
-      document.getElementById('m-poster').src = `https://image.tmdb.org/t/p/w185${m.poster_path}`;
-      document.getElementById('m-title').textContent = `${m.title} (${(m.release_date || '').slice(0, 4)})`;
-      document.getElementById('m-overview').textContent = m.overview || 'Описание отсутствует.';
-      document.getElementById('m-rates').textContent = `★ TMDB: ${m.vote_average ? m.vote_average.toFixed(1) : '—'}`;
+      const mat = m.material_data || {};
+      const poster = mat.poster_url || 'https://via.placeholder.com/300x450/1e293b/94a3b8?text=Обложка';
+      const year = m.year || mat.year || '';
+      const title = m.title || m.title_orig || 'Фильм';
 
-      try {
-        const credits = await apiFetch(`/movie/${m.id}/credits?api_key=${TMDB_API_KEY}&language=ru-RU`);
-        const dir = (credits.crew || []).find(c => c.job === 'Director');
-        document.getElementById('m-dir').textContent = dir ? `Реж: ${dir.name}` : 'Реж: Неизвестен';
-      } catch(e) {
-        document.getElementById('m-dir').textContent = 'Реж: —';
-      }
+      document.getElementById('m-poster').src = poster;
+      document.getElementById('m-title').textContent = `${title} ${year ? '(' + year + ')' : ''}`;
+      document.getElementById('m-overview').textContent = mat.description || 'Описание отсутствует.';
+
+      const kp = mat.kinopoisk_rating ? `КП: ${mat.kinopoisk_rating}` : '';
+      const imdb = mat.imdb_rating ? `IMDb: ${mat.imdb_rating}` : '';
+      document.getElementById('m-rates').textContent = [kp, imdb].filter(Boolean).join(' • ') || 'Рейтинг уточняется';
+      document.getElementById('m-dir').textContent = m.translation?.title ? `Озвучка: ${m.translation.title}` : 'Оригинал / Дубляж';
 
       modal.style.display = 'flex';
     }
@@ -359,21 +349,22 @@
     let debounceTimer;
     searchInput.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => searchTMDB(e.target.value), 350);
+      debounceTimer = setTimeout(() => searchMovies(e.target.value.trim()), 350);
     });
 
+    // Отправка задания в бот
     document.getElementById('send-task-btn').addEventListener('click', () => {
       if (!selectedMovie || !tg) return;
 
+      const mat = selectedMovie.material_data || {};
       const payload = {
         action: "DOWNLOAD_MOVIE",
-        tmdb_id: selectedMovie.id,
-        title: selectedMovie.title,
-        orig_title: selectedMovie.original_title,
-        year: (selectedMovie.release_date || '').slice(0, 4),
-        overview: selectedMovie.overview,
-        rating: selectedMovie.vote_average ? selectedMovie.vote_average.toFixed(1) : '—',
-        poster: `https://image.tmdb.org/t/p/w500${selectedMovie.poster_path}`,
+        stream_link: selectedMovie.link,
+        title: selectedMovie.title || selectedMovie.title_orig,
+        orig_title: selectedMovie.title_orig || '',
+        year: String(selectedMovie.year || mat.year || ''),
+        overview: mat.description || '',
+        rating: mat.kinopoisk_rating || mat.imdb_rating || '—',
         quality: document.getElementById('m-quality').value,
         format: document.getElementById('m-format').value,
         subs: document.getElementById('m-subs').value
@@ -383,7 +374,8 @@
       tg.close();
     });
 
-    loadTrending();
+    // Стартовая подборка
+    searchMovies('');
   </script>
 </body>
 </html>

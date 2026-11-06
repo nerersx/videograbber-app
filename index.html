@@ -26,8 +26,13 @@
     header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
       margin-bottom: 14px;
+    }
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     .logo-badge {
       background: linear-gradient(135deg, #0284c7, #2563eb);
@@ -37,6 +42,45 @@
       padding: 6px 10px;
       border-radius: 8px;
     }
+    .key-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .key-box {
+      display: none;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      gap: 6px;
+    }
+    .key-box.open { display: flex; }
+    .key-box input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+    .key-box button {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
     .search-box {
       position: relative;
       margin-bottom: 16px;
@@ -58,12 +102,18 @@
       font-size: 13px;
       color: var(--text-muted);
       padding: 24px 10px;
+      line-height: 1.5;
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    @media (min-width: 600px) {
+      .grid { grid-template-columns: repeat(4, 1fr); }
     }
     .movie-card {
       background: var(--card-bg);
@@ -73,7 +123,9 @@
       display: flex;
       flex-direction: column;
       cursor: pointer;
+      transition: transform 0.15s;
     }
+    .movie-card:hover { transform: translateY(-2px); border-color: var(--accent); }
     .poster-wrap {
       width: 100%;
       aspect-ratio: 2 / 3;
@@ -86,7 +138,7 @@
       position: absolute;
       top: 6px;
       right: 6px;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.82);
       backdrop-filter: blur(4px);
       color: #fbbf24;
       font-weight: 700;
@@ -119,10 +171,12 @@
       backdrop-filter: blur(6px);
       display: none;
       align-items: flex-end;
+      justify-content: center;
       z-index: 100;
     }
     .modal-sheet {
       width: 100%;
+      max-width: 540px;
       background: var(--card-bg);
       border-top: 1px solid var(--border);
       border-radius: 20px 20px 0 0;
@@ -143,7 +197,7 @@
     }
     .modal-titles h2 { font-size: 16px; margin-bottom: 4px; }
     .modal-titles p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
-    .overview { font-size: 12.5px; color: #cbd5e1; line-height: 1.45; }
+    .overview { font-size: 12.5px; color: #cbd5e1; line-height: 1.45; max-height: 110px; overflow-y: auto; }
 
     .control-row {
       display: flex;
@@ -192,15 +246,23 @@
 <body>
 
   <header>
-    <div class="logo-badge">▶ VideoGrabber</div>
-    <span style="font-size: 13px; font-weight: 600;">Удалённый пульт ПК</span>
+    <div class="brand-left">
+      <div class="logo-badge">▶ VideoGrabber</div>
+      <span style="font-size: 13px; font-weight: 600;">Удалённый пульт ПК</span>
+    </div>
+    <button class="key-btn" id="toggle-key-btn" title="Настроить API-ключ Кинопоиска">🔑 API КП</button>
   </header>
 
-  <div class="search-box">
-    <input type="text" id="search-input" placeholder="Введите название фильма...">
+  <div class="key-box" id="key-box">
+    <input type="text" id="kp-key-input" placeholder="Вставьте API-ключ kinopoiskapiunofficial.tech (необязательно)">
+    <button id="save-key-btn">Сохранить</button>
   </div>
 
-  <div id="status" class="status-msg">Загрузка каталога...</div>
+  <div class="search-box">
+    <input type="text" id="search-input" placeholder="Введите название фильма (например: Дюна)...">
+  </div>
+
+  <div id="status" class="status-msg">Загрузка популярных фильмов...</div>
   <div class="grid" id="movies-grid"></div>
 
   <!-- Модалка -->
@@ -210,7 +272,7 @@
         <img src="" id="m-poster" class="modal-poster">
         <div class="modal-titles">
           <h2 id="m-title">Название</h2>
-          <p id="m-dir">Озвучка / Качество: —</p>
+          <p id="m-dir">Режиссёр / Жанр: —</p>
           <p id="m-rates" style="color: #fbbf24; font-weight:600; margin-top:4px;">★ Рейтинг: —</p>
         </div>
       </div>
@@ -250,69 +312,124 @@
     const tg = window.Telegram?.WebApp;
     if (tg) tg.expand();
 
-    const KODIK_TOKEN = "0494164a3e824c4b4a68393cb5622014";
+    let kpApiKey = localStorage.getItem('vg_kp_key') || '';
     let selectedMovie = null;
 
     const grid = document.getElementById('movies-grid');
     const statusEl = document.getElementById('status');
     const searchInput = document.getElementById('search-input');
     const modal = document.getElementById('modal');
+    const keyBox = document.getElementById('key-box');
+    const kpKeyInput = document.getElementById('kp-key-input');
 
-    // Обход CORS через AllOrigins с автоматическим парсингом ответа
-    async function fetchKodikSafe(endpoint) {
-      const rawTargetUrl = `https://kodikapi.com/${endpoint}`;
-      
-      // 1. Пробуем через api.allorigins.win (гарантированно возвращает чистый JSON без блокировок)
+    kpKeyInput.value = kpApiKey;
+
+    document.getElementById('toggle-key-btn').addEventListener('click', () => {
+      keyBox.classList.toggle('open');
+    });
+
+    document.getElementById('save-key-btn').addEventListener('click', () => {
+      kpApiKey = kpKeyInput.value.trim();
+      localStorage.setItem('vg_kp_key', kpApiKey);
+      keyBox.classList.remove('open');
+      searchMovies(searchInput.value.trim());
+    });
+
+    // ДВИЖОК 1: Официальный CORS-friendly поиск через Кинопоиск API Unofficial (если введён ключ)
+    async function searchKinopoiskDirect(query) {
+      const url = query
+        ? `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}`
+        : `https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1`;
+
+      const res = await fetch(url, {
+        headers: {
+          'X-API-KEY': kpApiKey,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!res.ok) throw new Error(`KP HTTP ${res.status}`);
+      const data = await res.json();
+      const raw = data.films || data.items || [];
+
+      return raw.map(f => ({
+        id: f.filmId || f.kinopoiskId,
+        title: f.nameRu || f.nameEn || f.nameOriginal || 'Фильм',
+        orig_title: f.nameEn || f.nameOriginal || '',
+        year: String(f.year || ''),
+        poster: f.posterUrlPreview || f.posterUrl,
+        rating: (f.rating && f.rating !== 'null') ? f.rating : (f.ratingKinopoisk || '—'),
+        director: (f.genres || []).map(g => g.genre).slice(0, 2).join(', ') || 'Кинопоиск',
+        overview: f.description || 'Нажмите «Отправить на ПК» — сервер автоматически подтянет полное описание и режиссёра.'
+      }));
+    }
+
+    // ДВИЖОК 2 (Автоматический без ключей и без прокси!): Apple iTunes Movies RU + IMDb CORS API
+    async function searchOpenCatalogRU(query) {
+      const term = query || 'Дюна';
+      // 1. Пробуем iTunes Russia Movies API (Официальный открытый CORS `Access-Control-Allow-Origin: *`, работает в РФ без VPN)
       try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawTargetUrl)}`;
-        const res = await fetch(proxyUrl);
+        const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=RU&media=movie&entity=movie&limit=24`;
+        const res = await fetch(itunesUrl);
         if (res.ok) {
-          return await res.json();
+          const data = await res.json();
+          if (data.results && data.results.length > 0) {
+            return data.results.map(item => ({
+              id: item.trackId,
+              title: item.trackName,
+              orig_title: item.trackCensoredName || item.trackName,
+              year: item.releaseDate ? item.releaseDate.slice(0, 4) : '',
+              // Меняем размер обложки с 100x100 на 600x900 HD
+              poster: (item.artworkUrl100 || '').replace('100x100bb', '600x900bb'),
+              rating: item.contentAdvisoryRating || 'HD',
+              director: item.artistName ? `Реж: ${item.artistName}` : (item.primaryGenreName || 'Фильм'),
+              overview: item.longDescription || item.shortDescription || 'Описание фильма доступно при скачивании.'
+            }));
+          }
         }
-      } catch(e) {}
+      } catch (e) {}
 
-      // 2. Резервный шлюз (на случай сетевого тайм-аута первого)
-      try {
-        const fallbackUrl = `https://corsproxy.io/?url=${encodeURIComponent(rawTargetUrl)}`;
-        const res2 = await fetch(fallbackUrl);
-        if (res2.ok) {
-          return await res2.json();
-        }
-      } catch(e) {}
-
-      throw new Error("CORS_BLOCKED");
+      // 2. Резервный открытый CORS-каталог IMDb (imdb.iamidiotareyoutoo.com — имеет открытый Access-Control-Allow-Origin: *)
+      const imdbUrl = `https://imdb.iamidiotareyoutoo.com/search?q=${encodeURIComponent(term)}`;
+      const res2 = await fetch(imdbUrl);
+      if (!res2.ok) throw new Error(`IMDb HTTP ${res2.status}`);
+      const data2 = await res2.json();
+      return (data2.description || []).map(item => ({
+        id: item['#IMDB_ID'],
+        title: item['#TITLE'],
+        orig_title: item['#TITLE'],
+        year: String(item['#YEAR'] || ''),
+        poster: item['#IMG_POSTER'] || 'https://placehold.co/300x450/1e293b/94a3b8?text=No+Poster',
+        rating: item['#RANK'] ? `#${item['#RANK']}` : 'IMDb',
+        director: item['#ACTORS'] || 'IMDb Catalog',
+        overview: `В ролях: ${item['#ACTORS'] || '—'}. Полное русское описание и оценки будут автоматически загружены вашим ПК при скачивании.`
+      }));
     }
 
     async function searchMovies(query) {
       statusEl.style.display = 'block';
-      statusEl.textContent = query ? `Поиск «${query}»...` : 'Загрузка новинок...';
-
-      const endpoint = query
-        ? `search?token=${KODIK_TOKEN}&title=${encodeURIComponent(query)}&with_material_data=true&limit=30`
-        : `list?token=${KODIK_TOKEN}&types=movie&sort=year&order=desc&with_material_data=true&limit=30`;
+      statusEl.textContent = query ? `Поиск «${query}»...` : 'Загрузка каталога...';
 
       try {
-        const data = await fetchKodikSafe(endpoint);
-        const rawResults = data.results || [];
-
-        const unique = [];
-        const seen = new Set();
-        rawResults.forEach(item => {
-          const key = (item.title || item.title_orig || '') + (item.year || '');
-          if (!seen.has(key)) {
-            seen.add(key);
-            unique.push(item);
+        let movies = [];
+        // Если пользователь сохранил ключ КП — используем Кинопоиск напрямую
+        if (kpApiKey) {
+          try {
+            movies = await searchKinopoiskDirect(query);
+          } catch (kpErr) {
+            movies = await searchOpenCatalogRU(query);
           }
-        });
-
-        if (unique.length === 0) {
-          grid.innerHTML = '';
-          statusEl.textContent = 'Ничего не найдено. Попробуйте ввести другое название.';
         } else {
-          renderMovies(unique);
+          movies = await searchOpenCatalogRU(query);
+        }
+
+        if (!movies || movies.length === 0) {
+          grid.innerHTML = '';
+          statusEl.textContent = 'Ничего не найдено. Попробуйте уточнить название или нажмите «🔑 API КП» вверху и укажите ключ Кинопоиска.';
+        } else {
+          renderMovies(movies);
         }
       } catch (err) {
-        statusEl.textContent = 'Ошибка загрузки данных. Повторите запрос.';
+        statusEl.textContent = `Ошибка сети (${err.message}). Нажмите «🔑 API КП» вверху и вставьте свой ключ Кинопоиска.`;
       }
     }
 
@@ -321,22 +438,18 @@
       statusEl.style.display = 'none';
 
       movies.forEach(m => {
-        const mat = m.material_data || {};
-        const title = m.title || m.title_orig || 'Без названия';
-        const year = m.year || mat.year || '';
-        const poster = mat.poster_url || 'https://placehold.co/300x450/1e293b/94a3b8?text=Нет+постера';
-        const rate = mat.kinopoisk_rating || mat.imdb_rating || '—';
-
         const card = document.createElement('div');
         card.className = 'movie-card';
+        const poster = m.poster || 'https://placehold.co/300x450/1e293b/94a3b8?text=Обложка';
+
         card.innerHTML = `
           <div class="poster-wrap">
-            <img src="${poster}" loading="lazy" onerror="this.src='https://placehold.co/300x450/1e293b/94a3b8?text=Обложка'">
-            <span class="rate-badge">★ ${rate}</span>
+            <img src="${poster}" loading="lazy" onerror="this.src='https://placehold.co/300x450/1e293b/94a3b8?text=Фильм'">
+            <span class="rate-badge">★ ${m.rating}</span>
           </div>
           <div class="card-info">
-            <span class="card-title">${title}</span>
-            <span class="card-meta">${year ? year + ' г.' : (m.type || 'Фильм')}</span>
+            <span class="card-title">${m.title}</span>
+            <span class="card-meta">${m.year ? m.year + ' г.' : 'Фильм'}</span>
           </div>
         `;
 
@@ -347,19 +460,11 @@
 
     function openMovieDetail(m) {
       selectedMovie = m;
-      const mat = m.material_data || {};
-      const poster = mat.poster_url || 'https://placehold.co/300x450/1e293b/94a3b8?text=Обложка';
-      const year = m.year || mat.year || '';
-      const title = m.title || m.title_orig || 'Фильм';
-
-      document.getElementById('m-poster').src = poster;
-      document.getElementById('m-title').textContent = `${title} ${year ? '(' + year + ')' : ''}`;
-      document.getElementById('m-overview').textContent = mat.description || 'Описание отсутствует.';
-
-      const kp = mat.kinopoisk_rating ? `КП: ${mat.kinopoisk_rating}` : '';
-      const imdb = mat.imdb_rating ? `IMDb: ${mat.imdb_rating}` : '';
-      document.getElementById('m-rates').textContent = [kp, imdb].filter(Boolean).join(' • ') || 'Рейтинг уточняется';
-      document.getElementById('m-dir').textContent = m.translation?.title ? `Озвучка: ${m.translation.title}` : 'Оригинал / Дубляж';
+      document.getElementById('m-poster').src = m.poster || 'https://placehold.co/300x450/1e293b/94a3b8?text=Фильм';
+      document.getElementById('m-title').textContent = `${m.title} ${m.year ? '(' + m.year + ')' : ''}`;
+      document.getElementById('m-overview').textContent = m.overview;
+      document.getElementById('m-dir').textContent = m.director || 'Фильм';
+      document.getElementById('m-rates').textContent = `★ ${m.rating}`;
 
       modal.style.display = 'flex';
     }
@@ -371,30 +476,34 @@
     let debounceTimer;
     searchInput.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => searchMovies(e.target.value.trim()), 400);
+      debounceTimer = setTimeout(() => searchMovies(e.target.value.trim()), 350);
     });
 
     document.getElementById('send-task-btn').addEventListener('click', () => {
-      if (!selectedMovie || !tg) return;
+      if (!selectedMovie) return;
 
-      const mat = selectedMovie.material_data || {};
       const payload = {
         action: "DOWNLOAD_MOVIE",
-        stream_link: selectedMovie.link,
-        title: selectedMovie.title || selectedMovie.title_orig,
-        orig_title: selectedMovie.title_orig || '',
-        year: String(selectedMovie.year || mat.year || ''),
-        overview: mat.description || '',
-        rating: mat.kinopoisk_rating || mat.imdb_rating || '—',
+        id: selectedMovie.id,
+        title: selectedMovie.title,
+        orig_title: selectedMovie.orig_title || selectedMovie.title,
+        year: selectedMovie.year || '',
+        overview: selectedMovie.overview || '',
+        rating: selectedMovie.rating || '—',
         quality: document.getElementById('m-quality').value,
         format: document.getElementById('m-format').value,
         subs: document.getElementById('m-subs').value
       };
 
-      tg.sendData(JSON.stringify(payload));
-      tg.close();
+      if (tg && tg.sendData) {
+        tg.sendData(JSON.stringify(payload));
+        tg.close();
+      } else {
+        alert(`Отправка задачи доступна при открытии через кнопку внутри Telegram!\nВыбран: ${payload.title} (${payload.year})`);
+      }
     });
 
+    // Запускаем стартовый каталог
     searchMovies('');
   </script>
 </body>

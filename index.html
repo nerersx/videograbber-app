@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>VideoGrabber Cinema</title>
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #131b2e;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #1e293b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 14px;
+      padding-bottom: 30px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+    .search-box {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .search-box input {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 15px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      outline: none;
+    }
+    .search-box input:focus { border-color: var(--accent); }
+
+    /* Сетка постеров */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .movie-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+    }
+    .poster-wrap {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      background: #1e293b;
+      position: relative;
+    }
+    .poster-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .rate-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      color: #fbbf24;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .card-info {
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Модальное окно деталей фильма */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: flex-end;
+      z-index: 100;
+    }
+    .modal-sheet {
+      width: 100%;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      padding: 18px;
+      max-height: 85vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-header {
+      display: flex;
+      gap: 12px;
+    }
+    .modal-poster {
+      width: 80px;
+      aspect-ratio: 2/3;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #1e293b;
+    }
+    .modal-titles h2 { font-size: 16px; margin-bottom: 4px; }
+    .modal-titles p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    .overview { font-size: 12.5px; color: #cbd5e1; line-height: 1.45; }
+
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+    }
+    .control-row label { color: var(--text-muted); font-weight: 600; }
+    .select-wrap {
+      display: flex;
+      gap: 6px;
+    }
+    select {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .action-btn {
+      background: var(--accent);
+      color: #000;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .action-btn:active { background: var(--accent-hover); }
+    .close-btn {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-badge">▶ VideoGrabber</div>
+    <span style="font-size: 13px; font-weight: 600;">Удалённый пульт ПК</span>
+  </header>
+
+  <div class="search-box">
+    <input type="text" id="search-input" placeholder="Поиск фильма в TMDB (на русском)...">
+  </div>
+
+  <div class="grid" id="movies-grid"></div>
+
+  <!-- Модалка скачивания -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <img src="" id="m-poster" class="modal-poster">
+        <div class="modal-titles">
+          <h2 id="m-title">Название</h2>
+          <p id="m-dir">Режиссёр: —</p>
+          <p id="m-rates" style="color: #fbbf24; font-weight:600; margin-top:4px;">★ TMDB: 0.0</p>
+        </div>
+      </div>
+
+      <div class="overview" id="m-overview"></div>
+
+      <div class="control-row">
+        <label>Качество и формат:</label>
+        <div class="select-wrap">
+          <select id="m-quality">
+            <option value="1080">1080p (Full HD)</option>
+            <option value="720" selected>720p (TG Оптимально)</option>
+            <option value="480">480p (Компактный)</option>
+          </select>
+          <select id="m-format">
+            <option value="mp4" selected>MP4</option>
+            <option value="mkv">MKV</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="control-row">
+        <label>Субтитры:</label>
+        <select id="m-subs">
+          <option value="soft">Вшить мягкой дорожкой (Softsubs)</option>
+          <option value="hard">Вжечь в видео (Hardsub для ТГ)</option>
+          <option value="none">Без субтитров</option>
+        </select>
+      </div>
+
+      <button class="action-btn" id="send-task-btn">🚀 Отправить на скачивание в ПК</button>
+      <div class="close-btn" id="close-modal-btn">Закрыть</div>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand(); // Разворачиваем на весь экран смартфона
+
+    // Публичный бесплатный ключ TMDB (v3 auth)
+    const TMDB_API_KEY = "3b006f1406e23b9d6a2f8b5a3e14fb5e";
+    let selectedMovie = null;
+
+    const grid = document.getElementById('movies-grid');
+    const searchInput = document.getElementById('search-input');
+    const modal = document.getElementById('modal');
+
+    // Дефолтная подборка популярных фильмов при запуске
+    async function loadTrending() {
+      const res = await fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_API_KEY}&language=ru-RU`);
+      const data = await res.json();
+      renderMovies(data.results || []);
+    }
+
+    async function searchTMDB(query) {
+      if (!query.trim()) { loadTrending(); return; }
+      const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ru-RU&query=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      renderMovies(data.results || []);
+    }
+
+    function renderMovies(movies) {
+      grid.innerHTML = '';
+      movies.forEach(m => {
+        if (!m.poster_path) return;
+        const card = document.createElement('div');
+        card.className = 'movie-card';
+        const year = (m.release_date || '').slice(0, 4);
+        const rate = m.vote_average ? m.vote_average.toFixed(1) : '—';
+
+        card.innerHTML = `
+          <div class="poster-wrap">
+            <img src="https://image.tmdb.org/t/p/w342${m.poster_path}" loading="lazy">
+            <span class="rate-badge">★ ${rate}</span>
+          </div>
+          <div class="card-info">
+            <span class="card-title">${m.title}</span>
+            <span class="card-meta">${year || 'Фильм'}</span>
+          </div>
+        `;
+        card.addEventListener('click', () => openMovieDetail(m));
+        grid.appendChild(card);
+      });
+    }
+
+    async function openMovieDetail(m) {
+      selectedMovie = m;
+      document.getElementById('m-poster').src = `https://image.tmdb.org/t/p/w185${m.poster_path}`;
+      document.getElementById('m-title').textContent = `${m.title} (${(m.release_date || '').slice(0, 4)})`;
+      document.getElementById('m-overview').textContent = m.overview || 'Описание отсутствует.';
+      document.getElementById('m-rates').textContent = `★ TMDB: ${m.vote_average ? m.vote_average.toFixed(1) : '—'}`;
+
+      // Запрашиваем режиссёра фильма из команды TMDB
+      try {
+        const credits = await fetch(`https://api.themoviedb.org/3/movie/${m.id}/credits?api_key=${TMDB_API_KEY}&language=ru-RU`).then(r => r.json());
+        const dir = (credits.crew || []).find(c => c.job === 'Director');
+        document.getElementById('m-dir').textContent = dir ? `Реж: ${dir.name}` : 'Реж: Неизвестен';
+      } catch(e) {
+        document.getElementById('m-dir').textContent = 'Реж: —';
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    document.getElementById('close-modal-btn').addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    let debounceTimer;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => searchTMDB(e.target.value), 400);
+    });
+
+    // Отправка задания в бот
+    document.getElementById('send-task-btn').addEventListener('click', () => {
+      if (!selectedMovie) return;
+
+      const payload = {
+        action: "DOWNLOAD_MOVIE",
+        tmdb_id: selectedMovie.id,
+        title: selectedMovie.title,
+        orig_title: selectedMovie.original_title,
+        year: (selectedMovie.release_date || '').slice(0, 4),
+        overview: selectedMovie.overview,
+        rating: selectedMovie.vote_average ? selectedMovie.vote_average.toFixed(1) : '—',
+        poster: `https://image.tmdb.org/t/p/w500${selectedMovie.poster_path}`,
+        quality: document.getElementById('m-quality').value,
+        format: document.getElementById('m-format').value,
+        subs: document.getElementById('m-subs').value
+      };
+
+      // Передаём JSON напрямую боту
+      tg.sendData(JSON.stringify(payload));
+      tg.close();
+    });
+
+    loadTrending();
+  </script>
+</body>
+</html>

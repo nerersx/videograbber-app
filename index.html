@@ -2,260 +2,413 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>VideoGrabber Cinema v4.0</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CleanYourTV OS • VideoGrabber v5.0</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Библиотека HLS.js для твоего собственного видеоплеера -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: #131b2e;
-      --card-hover: #1a2540;
-      --accent: #38bdf8;
-      --accent-hover: #0284c7;
+      --bg: #070b14;
+      --glass: rgba(19, 27, 46, 0.78);
+      --glass-strong: rgba(15, 23, 42, 0.94);
+      --card-bg: #11192c;
+      --accent: #00d2ff;
+      --accent-glow: rgba(0, 210, 255, 0.55);
       --green: #22c55e;
       --amber: #f59e0b;
       --danger: #ef4444;
       --text: #f8fafc;
       --text-muted: #94a3b8;
-      --border: #1e293b;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding: 14px;
-      padding-bottom: 86px;
-      min-height: 100vh;
+      --border: rgba(255, 255, 255, 0.09);
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --macos-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    header {
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #13203d 0%, var(--bg) 70%);
+      color: var(--text);
+      padding: 14px 16px 105px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* === ВЕРХНИЙ СТАТУС-БАР CLEANYOURTV OS === */
+    .tv-topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .brand-left { display: flex; align-items: center; gap: 10px; }
-    .logo-badge {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      color: #fff;
-      font-weight: 800;
-      font-size: 13px;
-      padding: 6px 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35);
-    }
-    .conn-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--amber); display: inline-block;
-    }
-    .conn-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
-    .key-btn {
-      background: var(--card-bg);
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border);
-      color: var(--text-muted);
-      font-size: 12px;
-      padding: 6px 10px;
-      border-radius: 8px;
-      cursor: pointer;
+      padding: 10px 16px;
+      border-radius: 18px;
+      margin-bottom: 18px;
+      max-width: 1180px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
+    .os-brand { display: flex; align-items: center; gap: 10px; }
+    .os-logo {
+      background: linear-gradient(135deg, #00d2ff, #2563eb);
+      color: #fff;
+      font-weight: 900;
+      font-size: 12.5px;
+      letter-spacing: 0.4px;
+      padding: 6px 11px;
+      border-radius: 10px;
+      box-shadow: 0 0 16px rgba(0, 210, 255, 0.4);
+    }
+    .os-title { font-size: 14px; font-weight: 800; letter-spacing: -0.2px; }
+    .os-status-right { display: flex; align-items: center; gap: 10px; }
+    .os-pill {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 11px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.2s var(--spring), background 0.2s;
+    }
+    .os-pill:hover { transform: scale(1.06); background: rgba(255,255,255,0.12); }
+    .os-pill:active { transform: scale(0.95); }
+    .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+    .conn-dot.online { background: var(--green); box-shadow: 0 0 10px var(--green); }
+    .os-clock { font-size: 13px; font-weight: 800; color: #e2e8f0; font-variant-numeric: tabular-nums; }
 
-    .settings-box {
+    /* Панель настроек OS */
+    .settings-drawer {
       display: none;
       flex-direction: column;
-      background: var(--card-bg);
+      background: var(--glass-strong);
+      backdrop-filter: blur(24px);
       border: 1px solid var(--border);
-      padding: 12px;
-      border-radius: 12px;
-      margin-bottom: 14px;
-      gap: 8px;
+      padding: 16px;
+      border-radius: 18px;
+      margin: 0 auto 18px;
+      max-width: 1180px;
+      gap: 10px;
+      animation: switchPop 0.28s var(--spring);
     }
-    .settings-box.open { display: flex; }
-    .settings-box label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
-    .settings-box input {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-    }
-    .settings-box button {
-      background: var(--accent);
-      color: #000;
-      border: none;
-      padding: 9px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 12px;
-      cursor: pointer;
-    }
-
-    .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
-
-    .search-box { position: relative; margin-bottom: 14px; }
-    .search-box input {
-      width: 100%;
-      background: var(--card-bg);
+    .settings-drawer.open { display: flex; }
+    .settings-row { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    @media (min-width: 700px) { .settings-row { grid-template-columns: repeat(3, 1fr); } }
+    .field-group { display: flex; flex-direction: column; gap: 4px; }
+    .field-group label { font-size: 11px; color: var(--text-muted); font-weight: 700; }
+    .field-group input {
+      background: rgba(0,0,0,0.45);
       border: 1px solid var(--border);
       color: var(--text);
-      font-size: 15px;
-      padding: 12px 14px;
-      border-radius: 12px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 12.5px;
       outline: none;
     }
-    .search-box input:focus { border-color: var(--accent); }
+    .field-group input:focus { border-color: var(--accent); }
+
+    /* Вкладки контента */
+    .main-container { max-width: 1180px; margin: 0 auto; }
+    .tab-pane { display: none; animation: fadeUp 0.3s var(--macos-ease); }
+    .tab-pane.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes switchPop {
+      0% { opacity: 0; transform: scale(0.92); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Поиск в стиле Spotlight macOS */
+    .search-box {
+      position: relative;
+      margin-bottom: 18px;
+    }
+    .search-box input {
+      width: 100%;
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 15.5px;
+      font-weight: 600;
+      padding: 14px 18px;
+      border-radius: 16px;
+      outline: none;
+      transition: all 0.25s var(--spring);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    .search-box input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.25), 0 12px 30px rgba(0,0,0,0.4);
+      transform: scale(1.008);
+    }
 
     .status-msg {
       text-align: center;
-      font-size: 13px;
+      font-size: 13.5px;
       color: var(--text-muted);
-      padding: 24px 10px;
-      line-height: 1.5;
+      padding: 32px 12px;
     }
 
+    /* === СЕТКА КАРТОЧЕК С АНИМАЦИЕЙ NINTENDO SWITCH === */
     .grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      max-width: 860px;
-      margin: 0 auto;
+      gap: 14px;
     }
-    @media (min-width: 600px) {
-      .grid { grid-template-columns: repeat(4, 1fr); }
-    }
+    @media (min-width: 640px) { .grid { grid-template-columns: repeat(4, 1fr); gap: 18px; } }
+    @media (min-width: 980px) { .grid { grid-template-columns: repeat(5, 1fr); gap: 20px; } }
+
     .movie-card {
       background: var(--card-bg);
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      border: 1px solid var(--border);
+      border: 2px solid transparent;
       display: flex;
       flex-direction: column;
       cursor: pointer;
       position: relative;
-      transition: transform 0.15s, border-color 0.15s;
+      transition: transform 0.28s var(--spring), border-color 0.2s, box-shadow 0.28s var(--macos-ease);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
     }
-    .movie-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .movie-card:hover, .movie-card.tv-focused {
+      transform: translateY(-6px) scale(1.045);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow), 0 16px 32px rgba(0,0,0,0.6);
+      z-index: 5;
+    }
+    .movie-card:active { transform: scale(0.96); }
+
+    @keyframes switchPulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.65), 0 16px 32px rgba(0,0,0,0.6); }
+      50% { box-shadow: 0 0 0 6px rgba(0, 210, 255, 0.25), 0 16px 32px rgba(0,0,0,0.6); }
+    }
+    .movie-card.tv-focused { animation: switchPulse 1.6s infinite ease-in-out; }
+
     .poster-wrap {
       width: 100%;
       aspect-ratio: 2 / 3;
-      background: #1e293b;
+      background: #162038;
       position: relative;
       overflow: hidden;
     }
     .poster-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .rate-badge {
       position: absolute;
-      top: 6px;
-      right: 6px;
-      background: rgba(0,0,0,0.82);
-      backdrop-filter: blur(4px);
+      top: 8px;
+      right: 8px;
+      background: rgba(7, 11, 20, 0.85);
+      backdrop-filter: blur(6px);
       color: #fbbf24;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 6px;
+      padding: 3px 7px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
     }
-    .card-info { padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+    .card-info { padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
     .card-title {
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 13.5px;
+      font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .card-meta { font-size: 11px; color: var(--text-muted); }
+    .card-meta { font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
 
-    /* Горизонтальные полки рекомендаций */
-    .shelf-block { margin-bottom: 20px; }
-    .shelf-title {
-      font-size: 14px;
-      font-weight: 800;
-      margin-bottom: 10px;
-      color: #e2e8f0;
-    }
+    /* Полки рекомендаций */
+    .shelf-block { margin-bottom: 24px; }
+    .shelf-title { font-size: 15px; font-weight: 800; margin-bottom: 12px; color: #f1f5f9; }
     .shelf-row {
       display: flex;
-      gap: 10px;
+      gap: 14px;
       overflow-x: auto;
-      padding-bottom: 6px;
+      padding: 8px 4px 14px;
       scrollbar-width: none;
     }
     .shelf-row::-webkit-scrollbar { display: none; }
-    .shelf-row .movie-card { min-width: 135px; max-width: 135px; flex-shrink: 0; }
+    .shelf-row .movie-card { min-width: 150px; max-width: 150px; flex-shrink: 0; }
 
-    .chips-row {
+    /* === ПАРЯЩИЙ DOCK В СТИЛЕ MACOS === */
+    .macos-dock-wrap {
+      position: fixed;
+      bottom: 14px;
+      left: 0;
+      right: 0;
       display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      scrollbar-width: none;
+      justify-content: center;
+      z-index: 90;
+      pointer-events: none;
     }
-    .chips-row::-webkit-scrollbar { display: none; }
-    .chip {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
+    .macos-dock {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 8px 14px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+    }
+    .dock-item {
+      background: transparent;
+      border: none;
       color: var(--text-muted);
-      padding: 6px 12px;
-      border-radius: 20px;
+      padding: 8px 16px;
+      border-radius: 16px;
       font-size: 11.5px;
-      font-weight: 600;
-      white-space: nowrap;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
       cursor: pointer;
+      transition: transform 0.25s var(--spring), background 0.2s, color 0.2s;
+      position: relative;
     }
-    .chip.active {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: var(--accent);
+    .dock-item:hover {
+      transform: translateY(-6px) scale(1.14);
+      color: var(--text);
+      background: rgba(255,255,255,0.07);
+    }
+    .dock-item.active {
       color: var(--accent);
+      background: rgba(0, 210, 255, 0.14);
     }
+    .dock-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 3px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+    .dock-icon { font-size: 19px; line-height: 1; }
 
-    /* Модалка */
+    /* === МОДАЛЬНОЕ ОКНО С ФИЗИКОЙ SWIPE-TO-CLOSE И FULLSCREEN === */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.88);
-      backdrop-filter: blur(6px);
+      background: rgba(4, 7, 15, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       display: none;
       align-items: flex-end;
       justify-content: center;
-      z-index: 100;
+      z-index: 120;
     }
+    @media (min-width: 768px) {
+      .modal-overlay { align-items: center; padding: 20px; }
+    }
+
     .modal-sheet {
       width: 100%;
-      max-width: 600px;
-      background: var(--card-bg);
-      border-top: 1px solid var(--border);
-      border-radius: 20px 20px 0 0;
-      padding: 16px;
-      max-height: 93vh;
+      max-width: 720px;
+      background: var(--glass-strong);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 26px 26px 0 0;
+      padding: 10px 18px 22px;
+      max-height: 82vh;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
+      position: relative;
+      box-shadow: 0 -12px 48px rgba(0,0,0,0.75);
+      transition: transform 0.32s var(--macos-ease), max-height 0.32s var(--macos-ease), border-radius 0.25s;
+      will-change: transform, max-height;
     }
-    .modal-header { display: flex; gap: 12px; }
+    .modal-sheet.fullscreen {
+      max-height: 98vh;
+      height: 98vh;
+      border-radius: 18px 18px 0 0;
+    }
+    @media (min-width: 768px) {
+      .modal-sheet {
+        border-radius: 26px;
+        max-height: 90vh;
+        padding: 18px 24px 24px;
+        animation: switchPop 0.3s var(--spring);
+      }
+    }
+
+    /* Верхняя ручка свайпа + Кнопки Fullscreen и Закрытия */
+    .sheet-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0 6px;
+      cursor: grab;
+      touch-action: none;
+    }
+    .sheet-drag-pill {
+      width: 44px;
+      height: 5px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 10px;
+      margin: 0 auto;
+    }
+    .sheet-top-actions {
+      display: flex;
+      gap: 8px;
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      z-index: 10;
+    }
+    .circle-icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s var(--spring), background 0.2s;
+    }
+    .circle-icon-btn:hover { transform: scale(1.1); background: rgba(255,255,255,0.18); }
+    .circle-icon-btn:active { transform: scale(0.9); }
+
+    .modal-header { display: flex; gap: 14px; padding-right: 74px; }
     .modal-poster {
-      width: 78px;
+      width: 76px;
       aspect-ratio: 2/3;
-      border-radius: 8px;
+      border-radius: 12px;
       object-fit: cover;
       background: #1e293b;
       flex-shrink: 0;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
     }
     .modal-titles { flex: 1; }
-    .modal-titles h2 { font-size: 15.5px; margin-bottom: 3px; }
-    .modal-titles p { font-size: 11.5px; color: var(--text-muted); line-height: 1.35; }
+    .modal-titles h2 { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+    .modal-titles p { font-size: 12px; color: var(--text-muted); line-height: 1.35; }
 
+    /* Переключатель режима: Смотреть онлайн / Скачать в ТГК */
     .mode-switch {
       display: flex;
-      background: var(--bg);
+      background: rgba(0,0,0,0.4);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 3px;
+      border-radius: 14px;
+      padding: 4px;
       gap: 4px;
     }
     .mode-btn {
@@ -263,323 +416,409 @@
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 8px;
-      border-radius: 7px;
-      font-size: 12px;
-      font-weight: 700;
+      padding: 9px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      font-weight: 800;
       cursor: pointer;
+      transition: all 0.2s var(--spring);
     }
     .mode-btn.active {
-      background: var(--card-hover);
+      background: rgba(0, 210, 255, 0.16);
       color: var(--accent);
-      border: 1px solid rgba(56,189,248,0.35);
+      border: 1px solid rgba(0, 210, 255, 0.35);
     }
 
-    /* Мульти-плеер (Кастомный HLS <video> + Iframe балансеров) */
-    .player-section { display: none; flex-direction: column; gap: 8px; }
+    /* === ВИДЕОПЛЕЕР И ЕДИНЫЙ НИЖНИЙ CONTROL BAR === */
+    .player-section { display: none; flex-direction: column; gap: 10px; }
     .player-section.active { display: flex; }
+
     .player-wrap {
       width: 100%;
       aspect-ratio: 16 / 9;
       background: #000;
-      border-radius: 10px;
+      border-radius: 16px;
       overflow: hidden;
       border: 1px solid var(--border);
       position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     }
-    .player-wrap iframe, .player-wrap video {
+    .player-wrap iframe, .player-wrap video, .player-wrap #kinobox-container {
       width: 100%;
       height: 100%;
       border: none;
       display: block;
     }
 
-    .control-row { display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
-    .control-row label { color: var(--text-muted); font-weight: 600; }
-    .select-wrap { display: flex; gap: 6px; }
-    select {
-      flex: 1;
-      background: var(--bg);
+    /* Нижний Control Bar для удобного выбора Озвучки, Серии и Плеера */
+    .unified-control-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 14px;
+      position: relative;
+    }
+    .ctrl-pill {
+      background: rgba(255, 255, 255, 0.07);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 9px 10px;
-      border-radius: 8px;
+      padding: 8px 12px;
+      border-radius: 11px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.2s var(--spring), border-color 0.2s;
+      flex: 1;
+      min-width: 135px;
+      justify-content: space-between;
+    }
+    .ctrl-pill:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .ctrl-pill span.val { color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+
+    /* Всплывающее меню поверх (Popover) для выбора озвучки или плеера */
+    .popover-menu {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: #0e1628;
+      border: 1px solid rgba(0, 210, 255, 0.35);
+      border-radius: 14px;
+      padding: 10px;
+      max-height: 210px;
+      overflow-y: auto;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.8);
+      animation: switchPop 0.2s var(--spring);
+    }
+    .popover-menu.open { display: flex; }
+    .pop-option {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid transparent;
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 10px;
       font-size: 12.5px;
-      outline: none;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      text-align: left;
+    }
+    .pop-option:hover { background: rgba(255,255,255,0.09); }
+    .pop-option.selected {
+      background: rgba(0, 210, 255, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 800;
+    }
+    .pop-badge {
+      font-size: 10.5px;
+      background: rgba(0,0,0,0.5);
+      padding: 2px 7px;
+      border-radius: 6px;
+      color: #fbbf24;
     }
 
+    /* Блок выбора сезонов и серий */
     .serial-box {
       display: none;
       flex-direction: column;
       gap: 8px;
-      background: rgba(9, 13, 22, 0.65);
+      background: rgba(0, 0, 0, 0.35);
       border: 1px solid var(--border);
       padding: 10px;
-      border-radius: 10px;
+      border-radius: 14px;
     }
     .serial-box.active { display: flex; }
-    .dl-scope-btns {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+    .season-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .season-chips::-webkit-scrollbar { display: none; }
+    .s-chip {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 5px 11px;
+      border-radius: 9px;
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
     }
+    .s-chip.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    .dl-scope-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .scope-btn {
-      background: var(--bg);
+      background: rgba(255,255,255,0.05);
       border: 1px solid var(--border);
       color: var(--text-muted);
       padding: 7px 4px;
-      border-radius: 7px;
+      border-radius: 8px;
       font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       text-align: center;
     }
-    .scope-btn.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(56, 189, 248, 0.12);
-    }
+    .scope-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0, 210, 255, 0.14); }
+
     .ep-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 5px;
-      max-height: 115px;
+      max-height: 110px;
       overflow-y: auto;
     }
     .ep-chip {
-      background: var(--card-bg);
+      background: rgba(255,255,255,0.05);
       border: 1px solid var(--border);
       color: var(--text);
       padding: 6px 4px;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-align: center;
       cursor: pointer;
     }
-    .ep-chip.selected {
-      background: var(--accent);
-      color: #000;
-      border-color: var(--accent);
-      font-weight: 800;
+    .ep-chip.selected { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 800; }
+
+    .select-wrap { display: flex; gap: 8px; }
+    select {
+      flex: 1;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px;
+      border-radius: 11px;
+      font-size: 12.5px;
+      font-weight: 600;
+      outline: none;
     }
 
     .action-btn {
-      background: var(--accent);
+      background: linear-gradient(135deg, #00d2ff, #0284c7);
       color: #000;
-      font-weight: 800;
+      font-weight: 900;
       font-size: 14px;
       border: none;
-      border-radius: 12px;
-      padding: 13px;
+      border-radius: 14px;
+      padding: 14px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      transition: transform 0.2s var(--spring), box-shadow 0.2s;
+      box-shadow: 0 8px 22px rgba(0, 210, 255, 0.3);
     }
-    .close-btn {
-      text-align: center;
-      font-size: 13px;
-      color: var(--text-muted);
-      padding: 4px;
-      cursor: pointer;
-    }
+    .action-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0, 210, 255, 0.45); }
+    .action-btn:active { transform: scale(0.97); }
 
+    /* Карточки задач */
     .task-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 12px;
       margin-bottom: 10px;
     }
     .task-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .task-title { font-size: 13px; font-weight: 700; }
-    .task-ctrl-btns { display: flex; gap: 5px; }
+    .task-title { font-size: 13px; font-weight: 800; }
     .mini-ctrl {
-      background: var(--bg);
+      background: rgba(255,255,255,0.07);
       border: 1px solid var(--border);
       color: var(--text);
       font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 6px;
+      padding: 4px 9px;
+      border-radius: 7px;
       cursor: pointer;
     }
-    .task-bar {
-      width: 100%; height: 6px; background: var(--bg);
-      border-radius: 4px; overflow: hidden; margin-top: 6px;
-    }
-    .task-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), var(--green));
-      transition: width 0.4s;
-    }
-
-    .bottom-nav {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      background: rgba(19, 27, 46, 0.96);
-      backdrop-filter: blur(10px);
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-around;
-      padding: 8px 6px 12px;
-      z-index: 90;
-    }
-    .nav-item {
-      background: transparent; border: none; color: var(--text-muted);
-      font-size: 11px; font-weight: 600; display: flex; flex-direction: column;
-      align-items: center; gap: 3px; cursor: pointer;
-    }
-    .nav-item.active { color: var(--accent); }
-    .nav-icon { font-size: 17px; }
+    .task-bar { width: 100%; height: 6px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+    .task-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); transition: width 0.35s; }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="brand-left">
-      <div class="logo-badge">▶ VideoGrabber</div>
-      <span style="font-size: 13px; font-weight: 700;">Cinema v4.0</span>
-      <span class="conn-dot" id="srv-dot" title="Статус прямой связи с ПК"></span>
+  <!-- ВЕРХНИЙ СТАТУС-БАР CLEANYOURTV OS -->
+  <header class="tv-topbar">
+    <div class="os-brand">
+      <div class="os-logo">CleanYourTV</div>
+      <span class="os-title">OS 5.0</span>
+      <span class="conn-dot" id="srv-dot" title="Статус связи с ПК"></span>
     </div>
-    <button class="key-btn" id="toggle-settings-btn">⚙️ Настройки</button>
+    <div class="os-status-right">
+      <button class="os-pill" id="sound-toggle-btn" title="Звуковые эффекты Nintendo Switch">🔊 Звук</button>
+      <button class="os-pill" id="toggle-settings-btn">⚙️ Система</button>
+      <span class="os-clock" id="os-clock">00:00</span>
+    </div>
   </header>
 
-  <div class="settings-box" id="settings-box">
-    <label>🌐 Адрес сервера ПК (локальный или Cloudflare HTTPS-туннель):</label>
-    <input type="text" id="srv-url-input" placeholder="http://127.0.0.1:8765">
-    <label>👤 Твой Telegram ID (для дублирования в ЛС из браузера):</label>
-    <input type="text" id="tg-uid-input" placeholder="Напиши /start боту или укажи ID">
-    <label>🔑 API-ключ Кинопоиска:</label>
-    <input type="text" id="kp-key-input" placeholder="По умолчанию встроен">
-    <button id="save-settings-btn">Сохранить</button>
-  </div>
-
-  <!-- ВКЛАДКА 1: Поиск -->
-  <div class="tab-pane active" id="pane-search">
-    <div class="search-box">
-      <input type="text" id="search-input" placeholder="Поиск фильма или сериала (Звёздные войны, Дюна, Пацаны)...">
+  <!-- Выдвижная панель настроек -->
+  <div class="settings-drawer" id="settings-drawer">
+    <div class="settings-row">
+      <div class="field-group">
+        <label>🌐 Адрес сервера ПК (или HTTPS-туннель):</label>
+        <input type="text" id="srv-url-input" placeholder="http://127.0.0.1:8765">
+      </div>
+      <div class="field-group">
+        <label>👤 Твой Telegram ID (для дублирования в ЛС):</label>
+        <input type="text" id="tg-uid-input" placeholder="Напиши /start боту">
+      </div>
+      <div class="field-group">
+        <label>🔑 API-ключ Кинопоиска:</label>
+        <input type="text" id="kp-key-input" placeholder="Встроен по умолчанию">
+      </div>
     </div>
-    <div id="status" class="status-msg">Загрузка каталога...</div>
-    <div class="grid" id="movies-grid"></div>
-  </div>
-
-  <!-- ВКЛАДКА 2: Умные рекомендации -->
-  <div class="tab-pane" id="pane-recs">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <span style="font-size:12px; color:var(--text-muted);" id="taste-profile-label">Обучаемые полки рекомендаций</span>
-      <button class="key-btn" id="reset-taste-btn">Сбросить вкус</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+      <span style="font-size:11.5px; color:var(--text-muted);">🎮 На ПК доступно управление стрелками клавиатуры (⬅️⬆️⬇️➡️ + Enter / Esc)</span>
+      <button class="os-pill" id="save-settings-btn" style="background:var(--accent); color:#000;">✓ Сохранить</button>
     </div>
-    <div id="recs-shelves"></div>
   </div>
 
-  <!-- ВКЛАДКА 3: Списки -->
-  <div class="tab-pane" id="pane-lists">
-    <div class="chips-row" style="margin-bottom:12px;">
-      <button class="chip active" id="btn-show-watchlist">🔖 Хочу посмотреть (<span id="cnt-watch">0</span>)</button>
-      <button class="chip" id="btn-show-watched">👁 Просмотрено (<span id="cnt-watched">0</span>)</button>
+  <main class="main-container">
+    <!-- ВКЛАДКА 1: Поиск -->
+    <div class="tab-pane active" id="pane-search">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="🔍 Поиск фильмов, сериалов и аниме (Звёздные войны, Дюна, Пацаны)...">
+      </div>
+      <div id="status" class="status-msg">Загрузка витрины CleanYourTV...</div>
+      <div class="grid" id="movies-grid"></div>
     </div>
-    <div id="lists-empty" class="status-msg">Список пуст.</div>
-    <div class="grid" id="lists-grid"></div>
-  </div>
 
-  <!-- ВКЛАДКА 4: Трекер закачек -->
-  <div class="tab-pane" id="pane-tracker">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <span style="font-size:13px; font-weight:700;">📡 Очередь закачек на ПК и в ТГК</span>
-      <button class="key-btn" id="clear-tasks-btn">Очистить</button>
+    <!-- ВКЛАДКА 2: Умные рекомендации -->
+    <div class="tab-pane" id="pane-recs">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <span style="font-size:12.5px; color:var(--text-muted);" id="taste-profile-label">Персональные полки на основе твоих действий</span>
+        <button class="os-pill" id="reset-taste-btn">Сбросить вкус</button>
+      </div>
+      <div id="recs-shelves"></div>
     </div>
-    <div id="tasks-container"></div>
-  </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО КАРТОЧКИ ФИЛЬМА / СЕРИАЛА -->
+    <!-- ВКЛАДКА 3: Списки -->
+    <div class="tab-pane" id="pane-lists">
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <button class="os-pill" id="btn-show-watchlist" style="border-color:var(--accent);">🔖 Хочу посмотреть (<span id="cnt-watch">0</span>)</button>
+        <button class="os-pill" id="btn-show-watched">👁 Просмотрено (<span id="cnt-watched">0</span>)</button>
+      </div>
+      <div id="lists-empty" class="status-msg">Список пуст.</div>
+      <div class="grid" id="lists-grid"></div>
+    </div>
+
+    <!-- ВКЛАДКА 4: Трекер закачек -->
+    <div class="tab-pane" id="pane-tracker">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <span style="font-size:14px; font-weight:800;">📡 Активные задачи и история ТГК</span>
+        <div style="display:flex; gap:8px;">
+          <button class="os-pill" id="refresh-srv-btn">🔄 Проверить ПК</button>
+          <button class="os-pill" id="clear-tasks-btn">Очистить</button>
+        </div>
+      </div>
+      <div id="tasks-container"></div>
+    </div>
+  </main>
+
+  <!-- МОДАЛЬНОЕ ОКНО С ПОДДЕРЖКОЙ SWIPE-TO-CLOSE И FULLSCREEN -->
   <div class="modal-overlay" id="modal">
-    <div class="modal-sheet">
+    <div class="modal-sheet" id="modal-sheet">
+      <!-- Зона свайпа сверху + быстрые кнопки Развернуть / Закрыть -->
+      <div class="sheet-topbar" id="sheet-drag-zone">
+        <div class="sheet-drag-pill"></div>
+      </div>
+      <div class="sheet-top-actions">
+        <button class="circle-icon-btn" id="expand-modal-btn" title="На весь экран">⛶</button>
+        <button class="circle-icon-btn" id="close-modal-btn" title="Закрыть (Esc)">✕</button>
+      </div>
+
       <div class="modal-header">
         <img src="" id="m-poster" class="modal-poster">
         <div class="modal-titles">
           <h2 id="m-title">Название</h2>
-          <p id="m-dir">Жанр / Режиссёр</p>
-          <p id="m-rates" style="color: #fbbf24; font-weight:600; margin-top:3px;">★ Рейтинг</p>
-          <div style="display:flex; gap:6px; margin-top:6px;">
-            <button class="key-btn" id="m-add-watch" style="flex:1;">🔖 В список</button>
-            <button class="key-btn" id="m-add-watched" style="flex:1;">👁 Смотрел</button>
+          <p id="m-dir">Жанр / Год</p>
+          <p id="m-rates" style="color: #fbbf24; font-weight:800; margin-top:3px;">★ Рейтинг</p>
+          <div style="display:flex; gap:6px; margin-top:8px;">
+            <button class="os-pill" id="m-add-watch">🔖 В список</button>
+            <button class="os-pill" id="m-add-watched">👁 Смотрел</button>
           </div>
         </div>
       </div>
 
+      <!-- Переключатель: Скачать или Смотреть онлайн -->
       <div class="mode-switch">
-        <button class="mode-btn active" id="tab-mode-dl">🚀 Скачать в ТГК (Топ качество)</button>
+        <button class="mode-btn active" id="tab-mode-dl">🚀 Скачать в ТГК (1080p)</button>
         <button class="mode-btn" id="tab-mode-watch">▶️ Смотреть онлайн</button>
       </div>
 
-      <!-- Секция мульти-плеера (Свой HLS плеер + выбор балансеров) -->
+      <!-- ВИДЕОПЛЕЕР -->
       <div class="player-section" id="player-section">
-        <div class="chips-row" id="balancer-tabs"></div>
-        <div class="player-wrap">
+        <div class="player-wrap" id="player-stage">
           <video id="custom-hls-video" controls playsinline style="display:none;"></video>
           <iframe id="balancer-iframe" src="" allowfullscreen allow="autoplay *; fullscreen *"></iframe>
         </div>
       </div>
 
-      <!-- Единый нормализованный список озвучек со всех балансеров -->
-      <div class="control-row">
-        <label id="voice-status-lbl">🎙 Доступные озвучки (ранжирование по 1080p):</label>
-        <select id="m-voice"></select>
+      <!-- ЕДИНЫЙ УДОБНЫЙ CONTROL BAR СНИЗУ (Озвучка + Плеер) -->
+      <div class="unified-control-bar">
+        <button class="ctrl-pill" id="btn-open-voices">
+          <span>🎙 Озвучка:</span>
+          <span class="val" id="lbl-current-voice">Поиск...</span>
+          <span>▾</span>
+        </button>
+        <button class="ctrl-pill" id="btn-open-players">
+          <span>⚡ Плеер:</span>
+          <span class="val" id="lbl-current-player">Авто</span>
+          <span>▾</span>
+        </button>
       </div>
 
-      <!-- Выбор сезонов и серий для сериалов -->
+      <!-- Всплывающий список озвучек -->
+      <div class="popover-menu" id="popover-voices"></div>
+
+      <!-- Всплывающий список плееров (внизу под видео) -->
+      <div class="popover-menu" id="popover-players"></div>
+
+      <!-- Выбор сезона и серий для сериалов -->
       <div class="serial-box" id="serial-box">
-        <div class="control-row">
-          <label>📺 Сезон:</label>
-          <select id="m-season"></select>
+        <div class="season-chips" id="season-chips"></div>
+        <div class="dl-scope-btns" id="dl-scope-wrap">
+          <button class="scope-btn active" data-scope="selected">Выбрать серии</button>
+          <button class="scope-btn" data-scope="season">Весь сезон</button>
+          <button class="scope-btn" data-scope="all_seasons">Весь сериал</button>
         </div>
-
-        <div class="control-row" id="dl-scope-wrap">
-          <label>📦 Режим скачивания сериала:</label>
-          <div class="dl-scope-btns">
-            <button class="scope-btn active" data-scope="selected">Выбрать серии</button>
-            <button class="scope-btn" data-scope="season">Весь сезон</button>
-            <button class="scope-btn" data-scope="all_seasons">Весь сериал</button>
-          </div>
-        </div>
-
-        <div class="control-row" id="ep-picker-wrap">
-          <label>Серии:</label>
-          <div class="ep-grid" id="ep-grid"></div>
-        </div>
+        <div class="ep-grid" id="ep-grid"></div>
       </div>
 
-      <!-- Настройки скачивания (По умолчанию 1080p!) -->
-      <div id="dl-options-wrap" style="display:flex; flex-direction:column; gap:8px;">
-        <div class="control-row">
-          <label>⚙️ Приоритет качества и формат:</label>
-          <div class="select-wrap">
-            <select id="m-quality">
-              <option value="1080" selected>🔥 1080p (Full HD — Максимальное)</option>
-              <option value="720">720p (HD Баланс)</option>
-              <option value="480">480p (Компактный)</option>
-            </select>
-            <select id="m-format">
-              <option value="mp4" selected>MP4 (Стриминг iOS/Android)</option>
-              <option value="mkv">MKV</option>
-            </select>
-          </div>
+      <!-- Настройки скачивания -->
+      <div id="dl-options-wrap" style="display:flex; flex-direction:column; gap:10px;">
+        <div class="select-wrap">
+          <select id="m-quality">
+            <option value="1080" selected>🔥 1080p (Full HD — Топ качество)</option>
+            <option value="720">720p (HD Баланс)</option>
+            <option value="480">480p (Компактный)</option>
+          </select>
+          <select id="m-format">
+            <option value="mp4" selected>MP4 (iOS / Android)</option>
+            <option value="mkv">MKV</option>
+          </select>
         </div>
-        <button class="action-btn" id="send-task-btn">🚀 Скачать в ТГК + продублировать в ЛС</button>
+        <button class="action-btn" id="send-task-btn">🚀 Скачать в ТГК + прислать мне в ЛС</button>
       </div>
-
-      <div class="close-btn" id="close-modal-btn">Закрыть окно</div>
     </div>
   </div>
 
-  <nav class="bottom-nav">
-    <button class="nav-item active" data-pane="pane-search"><span class="nav-icon">🔍</span><span>Поиск</span></button>
-    <button class="nav-item" data-pane="pane-recs"><span class="nav-icon">✨</span><span>Для тебя</span></button>
-    <button class="nav-item" data-pane="pane-lists"><span class="nav-icon">📌</span><span>Списки</span></button>
-    <button class="nav-item" data-pane="pane-tracker"><span class="nav-icon">📊</span><span>Загрузки</span></button>
-  </nav>
+  <!-- ПАРЯЩИЙ DOCK В СТИЛЕ MACOS -->
+  <div class="macos-dock-wrap">
+    <nav class="macos-dock">
+      <button class="dock-item active" data-pane="pane-search"><span class="dock-icon">🔍</span><span>Поиск</span></button>
+      <button class="dock-item" data-pane="pane-recs"><span class="dock-icon">✨</span><span>Для тебя</span></button>
+      <button class="dock-item" data-pane="pane-lists"><span class="dock-icon">📌</span><span>Списки</span></button>
+      <button class="dock-item" data-pane="pane-tracker"><span class="dock-icon">📊</span><span>Загрузки</span></button>
+    </nav>
+  </div>
 
   <script>
     const tg = window.Telegram?.WebApp;
@@ -593,26 +832,87 @@
     let serverUrl = localStorage.getItem('vg_srv_url') || 'http://127.0.0.1:8765';
     let kpApiKey = localStorage.getItem('vg_kp_key') || DEFAULT_KP_KEY;
     let userTgId = localStorage.getItem('vg_tg_uid') || (tg?.initDataUnsafe?.user?.id ? String(tg.initDataUnsafe.user.id) : '');
+    let soundEnabled = localStorage.getItem('vg_sfx') !== 'off';
 
     let watchlist = JSON.parse(localStorage.getItem('vg_watchlist') || '[]');
     let watched = JSON.parse(localStorage.getItem('vg_watched') || '[]');
     let tasteHistory = JSON.parse(localStorage.getItem('vg_taste_v3') || '[]');
     let localTasks = JSON.parse(localStorage.getItem('vg_tasks_v3') || '[]');
 
+    // Быстрый кэш в оперативной памяти
+    const memorySourcesCache = new Map();
+
     let selectedMovie = null;
     let unifiedVoiceGroups = [];
     let currentVoiceGroup = null;
+    let currentPlayerSource = null;
+    let currentSeasonKey = '1';
     let selectedDownloadScope = 'selected';
     let selectedEpisodesSet = new Set(['1']);
     let isWatchOnlineMode = false;
     let serverReachable = false;
     let hlsInstance = null;
+    let focusedCardIdx = -1;
 
     document.getElementById('srv-url-input').value = serverUrl;
     document.getElementById('kp-key-input').value = kpApiKey;
     document.getElementById('tg-uid-input').value = userTgId;
 
-    // === 1. УМНЫЙ НОРМАЛИЗАТОР ОЗВУЧЕК НА ФРОНТЕНДЕ ===
+    // === 1. ЗВУКОВОЙ ДВИЖОК NINTENDO SWITCH (Web Audio API без внешних файлов) ===
+    let audioCtx = null;
+    function playSwitchSound(type = 'tick') {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'tick') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, now);
+          osc.frequency.exponentialRampToValueAtTime(1320, now + 0.025);
+          gain.gain.setValueAtTime(0.04, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+          osc.start(now);
+          osc.stop(now + 0.032);
+        } else if (type === 'pop') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(520, now);
+          osc.frequency.exponentialRampToValueAtTime(1040, now + 0.055);
+          gain.gain.setValueAtTime(0.07, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          osc.start(now);
+          osc.stop(now + 0.065);
+        }
+      } catch (e) {}
+    }
+
+    function updateSoundBtnUI() {
+      const btn = document.getElementById('sound-toggle-btn');
+      btn.textContent = soundEnabled ? '🔊 Звук' : '🔇 Без звука';
+      btn.style.opacity = soundEnabled ? '1' : '0.6';
+    }
+    updateSoundBtnUI();
+
+    document.getElementById('sound-toggle-btn').addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('vg_sfx', soundEnabled ? 'on' : 'off');
+      updateSoundBtnUI();
+      if (soundEnabled) playSwitchSound('pop');
+    });
+
+    // Часы в верхнем баре CleanYourTV OS
+    function updateClock() {
+      document.getElementById('os-clock').textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+    setInterval(updateClock, 10000);
+    updateClock();
+
+    // === 2. НОРМАЛИЗАТОР ОЗВУЧЕК И ЗЕРКАЛ ===
     const VOICE_SYNONYM_MAP = [
       { canon: "🎬 Дубляж (Официальный)", keys: ["дубляж", "дублирован", "мосфильм", "пифагор", "лицензия", "red head sound", "rhs", "снг", "dub"] },
       { canon: "🎙 HDRezka Studio", keys: ["hdrezka", "rezka", "резка"] },
@@ -620,61 +920,612 @@
       { canon: "🎙 LostFilm", keys: ["lostfilm", "лостфильм", "лостфилм"] },
       { canon: "🎙 TVShows", keys: ["tvshows", "твшоус"] },
       { canon: "🎙 Jaskier (Яскьер)", keys: ["jaskier", "яскьер"] },
-      { canon: "🎙 AlexFilm", keys: ["alexfilm", "алексфильм"] },
-      { canon: "🎙 NewStudio", keys: ["newstudio", "ньюстудио"] },
-      { canon: "🎙 АниЛибрия (AniLibria)", keys: ["anilibria", "анилибрия"] },
+      { canon: "🎙 АниЛибрия", keys: ["anilibria", "анилибрия"] },
       { canon: "🎙 Студийная Банда", keys: ["студийная банда", "studio band"] },
-      { canon: "🎙 Авторский (Гоблин / Гаврилов)", keys: ["гоблин", "пучков", "гаврилов", "михалев", "володарский", "авторский"] },
-      { canon: "🎙 Многоголосый закадровый", keys: ["многоголос", "мво", "mvo", "профессиональн", "novamedia", "amedia"] },
-      { canon: "🇬🇧 Оригинал (Original + Sub)", keys: ["оригинал", "original", "eng", "английск", "субтитр", "sub"] }
+      { canon: "🎙 Авторский (Гоблин)", keys: ["гоблин", "пучков", "гаврилов", "авторский"] },
+      { canon: "🎙 Многоголосый (MVO)", keys: ["многоголос", "мво", "mvo", "профессиональн"] },
+      { canon: "🇬🇧 Оригинал (Eng + Sub)", keys: ["оригинал", "original", "eng", "субтитр", "sub"] }
     ];
 
     function normalizeVoiceTitle(raw) {
       if (!raw) return "🎬 Дубляж (Официальный)";
       const low = raw.toLowerCase().trim();
-      for (const rule of VOICE_SYNONYM_MAP) {
-        if (rule.keys.some(k => low.includes(k))) return rule.canon;
+      for (const r of VOICE_SYNONYM_MAP) {
+        if (r.keys.some(k => low.includes(k))) return r.canon;
       }
       const clean = raw.replace(/\[.*?\]|\(.*?\)/g, '').trim();
       return clean ? `🎙 ${clean}` : "🎬 Дубляж (Официальный)";
+    }
+
+    function fixMirrorDomain(url) {
+      if (!url) return '';
+      if (url.startsWith('//')) url = 'https:' + url;
+      return url.replace('kodik.info', 'kodik.biz').replace('aniqit.com', 'kodik.biz');
     }
 
     function getQualityScore(qStr) {
       const s = String(qStr || '').toLowerCase();
       if (s.includes('2160') || s.includes('4k')) return 2160;
       if (s.includes('1080') || s.includes('fhd') || s.includes('bd')) return 1080;
-      if (s.includes('720') || s.includes('hd')) return 720;
       return 720;
     }
 
-    // Переключение вкладок
-    document.querySelectorAll('.nav-item').forEach(btn => {
+    // === 3. НАВИГАЦИЯ DOCK И КЛАВИАТУРА/ГЕЙМПАД НА ПК ===
+    document.querySelectorAll('.dock-item').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.nav-item, .tab-pane').forEach(el => el.classList.remove('active'));
+        playSwitchSound('pop');
+        document.querySelectorAll('.dock-item, .tab-pane').forEach(el => el.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(btn.dataset.pane).classList.add('active');
+        focusedCardIdx = -1;
         if (btn.dataset.pane === 'pane-recs') renderSmartRecommendations();
         if (btn.dataset.pane === 'pane-lists') renderSavedLists();
-        if (btn.dataset.pane === 'pane-tracker') pollServerStatus();
+        if (btn.dataset.pane === 'pane-tracker') checkServerOnce();
       });
     });
 
+    document.addEventListener('keydown', (e) => {
+      const modalOpen = document.getElementById('modal').style.display === 'flex';
+      if (e.key === 'Escape' && modalOpen) {
+        closeModalWindow();
+        return;
+      }
+      if (modalOpen || document.activeElement.tagName === 'INPUT') return;
+
+      const activeGrid = document.querySelector('.tab-pane.active .grid');
+      if (!activeGrid) return;
+      const cards = Array.from(activeGrid.querySelectorAll('.movie-card'));
+      if (!cards.length) return;
+
+      const cols = window.innerWidth >= 980 ? 5 : (window.innerWidth >= 640 ? 4 : 2);
+      if (['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
+        e.preventDefault();
+        playSwitchSound('tick');
+        if (focusedCardIdx < 0) focusedCardIdx = 0;
+        else if (e.key === 'ArrowRight') focusedCardIdx = Math.min(cards.length - 1, focusedCardIdx + 1);
+        else if (e.key === 'ArrowLeft') focusedCardIdx = Math.max(0, focusedCardIdx - 1);
+        else if (e.key === 'ArrowDown') focusedCardIdx = Math.min(cards.length - 1, focusedCardIdx + cols);
+        else if (e.key === 'ArrowUp') focusedCardIdx = Math.max(0, focusedCardIdx - cols);
+
+        cards.forEach(c => c.classList.remove('tv-focused'));
+        const target = cards[focusedCardIdx];
+        if (target) {
+          target.classList.add('tv-focused');
+          target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      } else if (e.key === 'Enter' && focusedCardIdx >= 0 && cards[focusedCardIdx]) {
+        e.preventDefault();
+        cards[focusedCardIdx].click();
+      }
+    });
+
     document.getElementById('toggle-settings-btn').addEventListener('click', () => {
-      document.getElementById('settings-box').classList.toggle('open');
+      playSwitchSound('tick');
+      document.getElementById('settings-drawer').classList.toggle('open');
     });
 
     document.getElementById('save-settings-btn').addEventListener('click', () => {
+      playSwitchSound('pop');
       serverUrl = document.getElementById('srv-url-input').value.trim().replace(/\/$/, '') || 'http://127.0.0.1:8765';
       kpApiKey = document.getElementById('kp-key-input').value.trim() || DEFAULT_KP_KEY;
       userTgId = document.getElementById('tg-uid-input').value.trim();
       localStorage.setItem('vg_srv_url', serverUrl);
       localStorage.setItem('vg_kp_key', kpApiKey);
       localStorage.setItem('vg_tg_uid', userTgId);
-      document.getElementById('settings-box').classList.remove('open');
-      pollServerStatus();
+      document.getElementById('settings-drawer').classList.remove('open');
+      checkServerOnce();
     });
 
-    // === 2. ФИЛЬТР ПОСТЕРОВ И ПОИСК КАТАЛОГА ===
+    // === 4. СВЕРХБЫСТРЫЙ ПАРАЛЛЕЛЬНЫЙ ПОИСК ОЗВУЧЕК И ПЛЕЕРОВ ===
+    async function fetchAllBalancerSourcesFast(m) {
+      const cacheKey = `${m.kp_id || ''}_${m.imdb_id || ''}_${m.title}_${m.year}`.toLowerCase();
+      if (memorySourcesCache.has(cacheKey)) {
+        return memorySourcesCache.get(cacheKey);
+      }
+
+      const rawSources = [];
+      const cleanTitle = m.title.replace(/\(\d{4}\)/g, '').replace(/[:\-–]/g, ' ').trim();
+
+      // 1. Всегда мгновенно формируем гарантированные рабочие веб-плееры (чтобы не было черного экрана на смартфонах!)
+      if (m.kp_id && /^\d+$/.test(m.kp_id)) {
+        rawSources.push({
+          balancer: 'MultiPlayer HD (Моб/ПК)',
+          voice_canonical: '🎬 Дубляж (Официальный)',
+          voice_raw: 'Мульти-агрегатор 1080p',
+          quality: '1080p',
+          quality_rank: 1080,
+          iframe_url: `https://ddbb.lol/?kp=${m.kp_id}`,
+          is_serial: false,
+          seasons: {}
+        });
+      }
+      if (m.imdb_id && m.imdb_id.startsWith('tt')) {
+        rawSources.push({
+          balancer: 'VidSrc 1080p (Global)',
+          voice_canonical: '🇬🇧 Оригинал (Eng + Sub)',
+          voice_raw: 'English 1080p',
+          quality: '1080p',
+          quality_rank: 1080,
+          iframe_url: `https://vidsrc.xyz/embed/movie/${m.imdb_id}`,
+          is_serial: false,
+          seasons: {}
+        });
+      }
+
+      // 2. Если сервер ПК онлайн — берем данные с него за 1 запрос
+      if (serverReachable) {
+        try {
+          const params = new URLSearchParams({
+            title: cleanTitle,
+            orig_title: m.orig_title || '',
+            year: m.year || '',
+            kp_id: m.kp_id || '',
+            imdb_id: m.imdb_id || ''
+          });
+          const srvRes = await fetch(`${serverUrl}/api/sources?${params.toString()}`, { signal: AbortSignal.timeout(2200) });
+          if (srvRes.ok) {
+            const srvData = await srvRes.json();
+            if (srvData.results && srvData.results.length > 0) {
+              const merged = [...srvData.results, ...rawSources];
+              memorySourcesCache.set(cacheKey, merged);
+              return merged;
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 3. Параллельная гонка запросов (Promise.allSettled) с коротким таймаутом 2.0 сек
+      const fastJsonFetch = async (url) => {
+        try {
+          const r = await fetch(url, { signal: AbortSignal.timeout(1900) });
+          if (r.ok) return await r.json();
+        } catch (e) {}
+        try {
+          const pr = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(2400) });
+          if (pr.ok) return await pr.json();
+        } catch (e) {}
+        return null;
+      };
+
+      const kodikUrl = (m.kp_id && /^\d+$/.test(m.kp_id))
+        ? `https://kodikapi.com/search?token=${KODIK_PUBLIC_TOKEN}&kinopoisk_id=${m.kp_id}&with_episodes=true`
+        : `https://kodikapi.com/search?token=${KODIK_PUBLIC_TOKEN}&title=${encodeURIComponent(cleanTitle)}&with_episodes=true`;
+
+      const kbUrl = (m.kp_id && /^\d+$/.test(m.kp_id))
+        ? `https://api.kinobox.tv/api/players?kinopoisk=${m.kp_id}`
+        : null;
+
+      const [kodikSettled, kbSettled] = await Promise.allSettled([
+        fastJsonFetch(kodikUrl),
+        kbUrl ? fastJsonFetch(kbUrl) : Promise.resolve(null)
+      ]);
+
+      const kodikData = kodikSettled.status === 'fulfilled' ? kodikSettled.value : null;
+      if (kodikData && Array.isArray(kodikData.results)) {
+        kodikData.results.forEach(item => {
+          const rawV = item.translation?.title || 'Дубляж';
+          const qScore = getQualityScore(item.quality || '1080p');
+          const cleanSeasons = {};
+          if (item.seasons) {
+            Object.entries(item.seasons).forEach(([sK, sV]) => {
+              const epMap = {};
+              Object.entries(sV.episodes || {}).forEach(([eK, eV]) => {
+                const lnk = typeof eV === 'string' ? eV : (eV.link || '');
+                epMap[eK] = fixMirrorDomain(lnk);
+              });
+              cleanSeasons[sK] = { episodes: epMap };
+            });
+          }
+          rawSources.push({
+            balancer: 'Kodik (.biz зеркало)',
+            voice_canonical: normalizeVoiceTitle(rawV),
+            voice_raw: rawV,
+            quality: qScore >= 1080 ? '1080p' : `${qScore}p`,
+            quality_rank: qScore,
+            iframe_url: fixMirrorDomain(item.link || ''),
+            is_serial: Boolean(item.seasons),
+            seasons: cleanSeasons
+          });
+        });
+      }
+
+      const kbData = kbSettled.status === 'fulfilled' ? kbSettled.value : null;
+      const kbPlayers = Array.isArray(kbData) ? kbData : (kbData?.data || []);
+      kbPlayers.forEach(p => {
+        const bName = (p.type || p.source || 'Alloha').toUpperCase();
+        const iframe = fixMirrorDomain(p.iframeUrl || p.url || '');
+        if (!iframe || bName === 'KODIK') return;
+        const trList = p.translations || [{ name: 'Дубляж', quality: '1080p' }];
+        trList.forEach(tr => {
+          const rV = tr.name || tr.title || 'Дубляж';
+          const qS = getQualityScore(tr.quality || p.quality || '1080p');
+          rawSources.push({
+            balancer: bName,
+            voice_canonical: normalizeVoiceTitle(rV),
+            voice_raw: rV,
+            quality: qS >= 1080 ? '1080p' : `${qS}p`,
+            quality_rank: qS,
+            iframe_url: iframe,
+            is_serial: false,
+            seasons: {}
+          });
+        });
+      });
+
+      rawSources.sort((a, b) => b.quality_rank - a.quality_rank);
+      memorySourcesCache.set(cacheKey, rawSources);
+      return rawSources;
+    }
+
+    function groupAndRankVoices(sources) {
+      const map = new Map();
+      sources.forEach(src => {
+        const key = src.voice_canonical;
+        if (!map.has(key)) {
+          map.set(key, {
+            canonical: key,
+            bestQuality: src.quality,
+            bestRank: src.quality_rank,
+            balancers: [src.balancer],
+            primarySource: src,
+            allSources: [src]
+          });
+        } else {
+          const grp = map.get(key);
+          grp.allSources.push(src);
+          if (!grp.balancers.includes(src.balancer)) grp.balancers.push(src.balancer);
+          if (src.is_serial && !grp.primarySource.is_serial) {
+            grp.primarySource = src;
+          }
+        }
+      });
+      return Array.from(map.values()).sort((a, b) => b.bestRank - a.bestRank);
+    }
+
+    // === 5. МОДАЛЬНОЕ ОКНО, НИЖНИЙ CONTROL BAR И ПЛЕЕРЫ ===
+    async function openMovieDetail(m) {
+      playSwitchSound('pop');
+      selectedMovie = m;
+      recordUserInterest(m, 1);
+
+      const sheet = document.getElementById('modal-sheet');
+      sheet.classList.remove('fullscreen');
+      sheet.style.transform = '';
+
+      const fallbackSvg = `https://placehold.co/300x450/11192c/00d2ff?text=${encodeURIComponent(m.title.slice(0, 16))}`;
+      document.getElementById('m-poster').src = m.poster || fallbackSvg;
+      document.getElementById('m-title').textContent = `${m.title} ${m.year ? '(' + m.year + ')' : ''}`;
+      document.getElementById('m-dir').textContent = m.director || 'Фильм / Сериал';
+      document.getElementById('m-rates').textContent = `★ ${m.rating}`;
+
+      document.getElementById('popover-voices').classList.remove('open');
+      document.getElementById('popover-players').classList.remove('open');
+
+      setModalMode(false);
+      document.getElementById('modal').style.display = 'flex';
+
+      document.getElementById('lbl-current-voice').textContent = 'Загрузка...';
+      document.getElementById('lbl-current-player').textContent = 'Авто 1080p';
+
+      const allSources = await fetchAllBalancerSourcesFast(m);
+      unifiedVoiceGroups = groupAndRankVoices(allSources);
+
+      if (unifiedVoiceGroups.length === 0) {
+        unifiedVoiceGroups = [{
+          canonical: '🎬 Дубляж (Официальный)',
+          bestQuality: '1080p',
+          balancers: ['Auto'],
+          primarySource: { balancer: 'Auto', iframe_url: '', seasons: {} },
+          allSources: []
+        }];
+      }
+
+      selectVoiceGroup(unifiedVoiceGroups[0]);
+      renderVoicesPopover();
+    }
+
+    function selectVoiceGroup(grp) {
+      currentVoiceGroup = grp;
+      currentPlayerSource = grp.primarySource;
+      document.getElementById('lbl-current-voice').textContent = grp.canonical.replace(/^[^\s]+\s/, '');
+      document.getElementById('lbl-current-player').textContent = `${currentPlayerSource.balancer} (${ grp.bestQuality })`;
+      renderSeasonsAndEpisodes(currentPlayerSource);
+      renderPlayersPopover();
+      if (isWatchOnlineMode) launchActivePlayer();
+    }
+
+    function renderVoicesPopover() {
+      const pop = document.getElementById('popover-voices');
+      pop.innerHTML = unifiedVoiceGroups.map((g, idx) => `
+        <button class="pop-option ${g === currentVoiceGroup ? 'selected' : ''}" data-idx="${idx}">
+          <span>${g.canonical}</span>
+          <span class="pop-badge">🔥 ${g.bestQuality} • ${g.balancers.length} пл.</span>
+        </button>
+      `).join('');
+
+      pop.querySelectorAll('.pop-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          playSwitchSound('tick');
+          const g = unifiedVoiceGroups[Number(btn.dataset.idx)];
+          if (g) selectVoiceGroup(g);
+          pop.classList.remove('open');
+          renderVoicesPopover();
+        });
+      });
+    }
+
+    function renderPlayersPopover() {
+      const pop = document.getElementById('popover-players');
+      if (!currentVoiceGroup) return;
+
+      const list = [...currentVoiceGroup.allSources];
+      let html = '';
+
+      if (serverReachable) {
+        html += `
+          <button class="pop-option" data-mode="custom_hls">
+            <span>⚡ Свой CleanYourTV HLS-Плеер (Через прокси ПК)</span>
+            <span class="pop-badge">Без рекламы</span>
+          </button>
+        `;
+      }
+
+      list.forEach((src, i) => {
+        const isSel = (src === currentPlayerSource) ? 'selected' : '';
+        html += `
+          <button class="pop-option ${isSel}" data-mode="iframe" data-idx="${i}">
+            <span>▶️ Плеер: ${src.balancer} (${src.voice_raw})</span>
+            <span class="pop-badge">${src.quality}</span>
+          </button>
+        `;
+      });
+
+      pop.innerHTML = html;
+      pop.querySelectorAll('.pop-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          playSwitchSound('tick');
+          pop.classList.remove('open');
+          if (!isWatchOnlineMode) setModalMode(true);
+
+          if (btn.dataset.mode === 'custom_hls') {
+            document.getElementById('lbl-current-player').textContent = 'Свой HLS';
+            launchCustomProxiedHls(currentPlayerSource);
+          } else {
+            currentPlayerSource = list[Number(btn.dataset.idx)] || currentVoiceGroup.primarySource;
+            document.getElementById('lbl-current-player').textContent = currentPlayerSource.balancer;
+            renderSeasonsAndEpisodes(currentPlayerSource);
+            launchIframePlayer(currentPlayerSource);
+          }
+        });
+      });
+    }
+
+    document.getElementById('btn-open-voices').addEventListener('click', () => {
+      playSwitchSound('tick');
+      document.getElementById('popover-players').classList.remove('open');
+      document.getElementById('popover-voices').classList.toggle('open');
+    });
+
+    document.getElementById('btn-open-players').addEventListener('click', () => {
+      playSwitchSound('tick');
+      document.getElementById('popover-voices').classList.remove('open');
+      document.getElementById('popover-players').classList.toggle('open');
+    });
+
+    function setModalMode(watchOnline) {
+      isWatchOnlineMode = watchOnline;
+      document.getElementById('tab-mode-watch').classList.toggle('active', watchOnline);
+      document.getElementById('tab-mode-dl').classList.toggle('active', !watchOnline);
+      document.getElementById('player-section').classList.toggle('active', watchOnline);
+      document.getElementById('dl-options-wrap').style.display = watchOnline ? 'none' : 'flex';
+      document.getElementById('dl-scope-wrap').style.display = watchOnline ? 'none' : 'grid';
+
+      if (watchOnline) {
+        recordUserInterest(selectedMovie, 3);
+        launchActivePlayer();
+      } else {
+        stopActivePlayers();
+      }
+    }
+
+    document.getElementById('tab-mode-watch').addEventListener('click', () => { playSwitchSound('pop'); setModalMode(true); });
+    document.getElementById('tab-mode-dl').addEventListener('click', () => { playSwitchSound('pop'); setModalMode(false); });
+
+    function stopActivePlayers() {
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      const vid = document.getElementById('custom-hls-video');
+      vid.pause();
+      vid.removeAttribute('src');
+      vid.style.display = 'none';
+      const ifr = document.getElementById('balancer-iframe');
+      ifr.src = '';
+      ifr.style.display = 'block';
+    }
+
+    function getTargetEpisodeLink(sourceObj) {
+      if (!sourceObj) return '';
+      let link = fixMirrorDomain(sourceObj.iframe_url || '');
+      const firstEp = Array.from(selectedEpisodesSet)[0] || '1';
+      if (sourceObj.seasons && sourceObj.seasons[currentSeasonKey]?.episodes?.[firstEp]) {
+        const epVal = sourceObj.seasons[currentSeasonKey].episodes[firstEp];
+        link = fixMirrorDomain(typeof epVal === 'string' ? epVal : (epVal.link || link));
+      }
+      return link;
+    }
+
+    function launchActivePlayer() {
+      if (!currentPlayerSource) return;
+      launchIframePlayer(currentPlayerSource);
+    }
+
+    async function launchCustomProxiedHls(sourceObj) {
+      stopActivePlayers();
+      const targetUrl = getTargetEpisodeLink(sourceObj);
+      const vid = document.getElementById('custom-hls-video');
+      const ifr = document.getElementById('balancer-iframe');
+
+      try {
+        const res = await fetch(`${serverUrl}/api/resolve_stream?url=${encodeURIComponent(targetUrl)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.proxy_url && data.is_hls) {
+            const fullProxyUrl = `${serverUrl}${data.proxy_url}`;
+            ifr.style.display = 'none';
+            vid.style.display = 'block';
+            if (Hls.isSupported()) {
+              hlsInstance = new Hls();
+              hlsInstance.loadSource(fullProxyUrl);
+              hlsInstance.attachMedia(vid);
+              hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => vid.play().catch(() => {}));
+            } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
+              vid.src = fullProxyUrl;
+              vid.play().catch(() => {});
+            }
+            return;
+          }
+        }
+      } catch (e) {}
+      launchIframePlayer(sourceObj);
+    }
+
+    function launchIframePlayer(sourceObj) {
+      stopActivePlayers();
+      const ifr = document.getElementById('balancer-iframe');
+      ifr.style.display = 'block';
+      let url = getTargetEpisodeLink(sourceObj);
+      if (!url && selectedMovie?.kp_id) {
+        url = `https://ddbb.lol/?kp=${selectedMovie.kp_id}`;
+      }
+      ifr.src = url;
+    }
+
+    // === 6. СЕЗОНЫ И СЕРИИ ===
+    function renderSeasonsAndEpisodes(sourceObj) {
+      const serialBox = document.getElementById('serial-box');
+      const seasonChips = document.getElementById('season-chips');
+      const seasonsObj = sourceObj?.seasons;
+
+      if (!seasonsObj || Object.keys(seasonsObj).length === 0) {
+        serialBox.classList.remove('active');
+        return;
+      }
+
+      serialBox.classList.add('active');
+      const seasonKeys = Object.keys(seasonsObj).sort((a, b) => Number(a) - Number(b));
+      currentSeasonKey = seasonKeys[0];
+
+      seasonChips.innerHTML = seasonKeys.map(s => `
+        <button class="s-chip ${s === currentSeasonKey ? 'active' : ''}" data-s="${s}">Сезон ${s}</button>
+      `).join('');
+
+      seasonChips.querySelectorAll('.s-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          playSwitchSound('tick');
+          currentSeasonKey = btn.dataset.s;
+          seasonChips.querySelectorAll('.s-chip').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderEpisodeChips(seasonsObj[currentSeasonKey]);
+        });
+      });
+
+      renderEpisodeChips(seasonsObj[currentSeasonKey]);
+    }
+
+    function renderEpisodeChips(seasonData) {
+      const epGrid = document.getElementById('ep-grid');
+      const episodesObj = seasonData?.episodes || {};
+      const epNums = Object.keys(episodesObj).sort((a, b) => Number(a) - Number(b));
+
+      selectedEpisodesSet = new Set([epNums[0] || '1']);
+      epGrid.innerHTML = epNums.map(ep => `
+        <div class="ep-chip ${ep === epNums[0] ? 'selected' : ''}" data-ep="${ep}">Сер. ${ep}</div>
+      `).join('');
+
+      epGrid.querySelectorAll('.ep-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          playSwitchSound('tick');
+          const ep = chip.dataset.ep;
+          if (isWatchOnlineMode) {
+            selectedEpisodesSet = new Set([ep]);
+            epGrid.querySelectorAll('.ep-chip').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+            launchActivePlayer();
+          } else {
+            if (selectedEpisodesSet.has(ep) && selectedEpisodesSet.size > 1) {
+              selectedEpisodesSet.delete(ep);
+              chip.classList.remove('selected');
+            } else {
+              selectedEpisodesSet.add(ep);
+              chip.classList.add('selected');
+            }
+          }
+        });
+      });
+    }
+
+    document.querySelectorAll('.scope-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playSwitchSound('tick');
+        document.querySelectorAll('.scope-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedDownloadScope = btn.dataset.scope;
+        document.getElementById('ep-grid').style.display = (selectedDownloadScope === 'selected') ? 'grid' : 'none';
+      });
+    });
+
+    // === 7. ЖЕСТЫ МОБИЛЬНОЙ ШТОРКИ: SWIPE-TO-CLOSE И FULLSCREEN ===
+    const modalEl = document.getElementById('modal');
+    const sheetEl = document.getElementById('modal-sheet');
+    const dragZone = document.getElementById('sheet-drag-zone');
+
+    function closeModalWindow() {
+      playSwitchSound('tick');
+      stopActivePlayers();
+      modalEl.style.display = 'none';
+    }
+
+    document.getElementById('close-modal-btn').addEventListener('click', closeModalWindow);
+    document.getElementById('expand-modal-btn').addEventListener('click', () => {
+      playSwitchSound('pop');
+      sheetEl.classList.toggle('fullscreen');
+    });
+
+    modalEl.addEventListener('click', (e) => {
+      if (e.target === modalEl) closeModalWindow();
+    });
+
+    let touchStartY = 0;
+    let touchDeltaY = 0;
+    dragZone.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+      touchDeltaY = 0;
+      sheetEl.style.transition = 'none';
+    }, { passive: true });
+
+    dragZone.addEventListener('touchmove', (e) => {
+      touchDeltaY = e.touches[0].clientY - touchStartY;
+      if (touchDeltaY > 0) {
+        sheetEl.style.transform = `translateY(${touchDeltaY}px)`;
+      }
+    }, { passive: true });
+
+    dragZone.addEventListener('touchend', () => {
+      sheetEl.style.transition = '';
+      if (touchDeltaY > 95) {
+        closeModalWindow();
+      } else if (touchDeltaY < -50) {
+        playSwitchSound('pop');
+        sheetEl.classList.add('fullscreen');
+        sheetEl.style.transform = '';
+      } else {
+        sheetEl.style.transform = '';
+      }
+    });
+
+    // === 8. КАТАЛОГ, ПОСТЕРЫ И УМНЫЕ РЕКОМЕНДАЦИИ ===
     function isBadPosterUrl(url) {
       if (!url || typeof url !== 'string') return true;
       const low = url.toLowerCase();
@@ -738,36 +1589,6 @@
           }
         } catch (e) {}
       }
-
-      if (results.length < 5 && query) {
-        try {
-          const imdbRes = await fetch(`https://imdb.iamidiotareyoutoo.com/search?q=${encodeURIComponent(query)}`);
-          if (imdbRes.ok) {
-            const imdbData = await imdbRes.json();
-            (imdbData.description || []).slice(0, 10).forEach(item => {
-              const title = item['#TITLE'] || '';
-              const year = String(item['#YEAR'] || '');
-              const key = `${title}_${year}`.toLowerCase();
-              if (title && !seen.has(key)) {
-                seen.add(key);
-                results.push({
-                  id: item['#IMDB_ID'] || title,
-                  kp_id: '',
-                  imdb_id: item['#IMDB_ID'] || '',
-                  title: title,
-                  orig_title: title,
-                  year: year,
-                  poster: item['#IMG_POSTER'] || '',
-                  rating: 'IMDb',
-                  genres: [],
-                  director: item['#ACTORS'] || 'IMDb Global',
-                  overview: `В ролях: ${item['#ACTORS'] || '—'}`
-                });
-              }
-            });
-          }
-        } catch (e) {}
-      }
       return results;
     }
 
@@ -775,7 +1596,7 @@
       const statusEl = document.getElementById('status');
       const grid = document.getElementById('movies-grid');
       statusEl.style.display = 'block';
-      statusEl.textContent = query ? `Ищем «${query}»...` : 'Загрузка популярных новинок...';
+      statusEl.textContent = query ? `Ищем «${query}»...` : 'Загрузка популярных хитов...';
 
       const list = await fetchMoviesByQuery(query);
       if (!list.length) {
@@ -792,7 +1613,7 @@
       movies.forEach(m => {
         const card = document.createElement('div');
         card.className = 'movie-card';
-        const fallbackSvg = `https://placehold.co/300x450/131b2e/38bdf8?text=${encodeURIComponent(m.title.slice(0, 16))}`;
+        const fallbackSvg = `https://placehold.co/300x450/11192c/00d2ff?text=${encodeURIComponent(m.title.slice(0, 16))}`;
         const validPoster = (!isBadPosterUrl(m.poster)) ? m.poster : '';
 
         card.innerHTML = `
@@ -802,7 +1623,7 @@
           </div>
           <div class="card-info">
             <span class="card-title">${m.title}</span>
-            <span class="card-meta">${m.year ? m.year + ' г.' : 'Фильм'}</span>
+            <span class="card-meta">${m.year ? m.year + ' г.' : 'Тайтл'}</span>
           </div>
         `;
 
@@ -816,393 +1637,20 @@
           });
         }, { once: true });
 
+        card.addEventListener('mouseenter', () => playSwitchSound('tick'));
         card.addEventListener('click', () => openMovieDetail(m));
         targetEl.appendChild(card);
       });
     }
 
-    // === 3. МУЛЬТИ-СКАНЕР ОЗВУЧЕК И БАЛАНСЕРОВ (БЕЗ БЛОКИРОВОК CORS) ===
-    async function fetchAllBalancerSources(m) {
-      const rawSources = [];
-      const cleanTitle = m.title.replace(/\(\d{4}\)/g, '').replace(/[:\-–]/g, ' ').trim();
-
-      // А. Пробуем запросить через наш Python-сервер (если он на связи)
-      try {
-        const params = new URLSearchParams({
-          title: cleanTitle,
-          orig_title: m.orig_title || '',
-          year: m.year || '',
-          kp_id: m.kp_id || '',
-          imdb_id: m.imdb_id || ''
-        });
-        const srvRes = await fetch(`${serverUrl}/api/sources?${params.toString()}`, { signal: AbortSignal.timeout(3000) });
-        if (srvRes.ok) {
-          const srvData = await srvRes.json();
-          if (srvData.results && srvData.results.length > 0) {
-            return srvData.results;
-          }
-        }
-      } catch (e) {}
-
-      // Б. Параллельный опрос из браузера: Kinobox Multi-API + Kodik (прямой и через CORS-прокси)
-      const fetchWithCorsFallback = async (targetUrl) => {
-        try {
-          const r = await fetch(targetUrl, { signal: AbortSignal.timeout(3500) });
-          if (r.ok) return await r.json();
-        } catch (e) {}
-        try {
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-          const pr = await fetch(proxyUrl, { signal: AbortSignal.timeout(4500) });
-          if (pr.ok) return await pr.json();
-        } catch (e) {}
-        return null;
-      };
-
-      // 1. Опрос Kodik
-      const kodikUrls = [];
-      if (m.kp_id && /^\d+$/.test(m.kp_id)) {
-        kodikUrls.push(`https://kodikapi.com/search?token=${KODIK_PUBLIC_TOKEN}&kinopoisk_id=${m.kp_id}&with_episodes=true`);
-      }
-      kodikUrls.push(`https://kodikapi.com/search?token=${KODIK_PUBLIC_TOKEN}&title=${encodeURIComponent(cleanTitle)}&with_episodes=true`);
-      if (m.orig_title && m.orig_title !== cleanTitle) {
-        kodikUrls.push(`https://kodikapi.com/search?token=${KODIK_PUBLIC_TOKEN}&title=${encodeURIComponent(m.orig_title)}&with_episodes=true`);
-      }
-
-      for (const u of kodikUrls) {
-        const data = await fetchWithCorsFallback(u);
-        if (data && data.results && data.results.length > 0) {
-          data.results.forEach(item => {
-            const rawV = item.translation?.title || 'Оригинал / Дубляж';
-            const qScore = getQualityScore(item.quality || '1080p');
-            let link = item.link || '';
-            if (link.startsWith('//')) link = 'https:' + link;
-            rawSources.push({
-              balancer: 'Kodik',
-              voice_canonical: normalizeVoiceTitle(rawV),
-              voice_raw: rawV,
-              quality: qScore >= 1080 ? '1080p' : `${qScore}p`,
-              quality_rank: qScore,
-              iframe_url: link,
-              is_serial: Boolean(item.seasons),
-              seasons: item.seasons || {}
-            });
-          });
-          break;
-        }
-      }
-
-      // 2. Опрос агрегатора Kinobox (Alloha, Collaps, Videocdn, Voidboost)
-      if (m.kp_id && /^\d+$/.test(m.kp_id)) {
-        const kbData = await fetchWithCorsFallback(`https://api.kinobox.tv/api/players?kinopoisk=${m.kp_id}`);
-        const players = Array.isArray(kbData) ? kbData : (kbData?.data || []);
-        players.forEach(p => {
-          const bName = (p.type || p.source || 'Alloha').toUpperCase();
-          const iframe = p.iframeUrl || p.url || '';
-          if (!iframe || bName === 'KODIK') return;
-          const trList = p.translations || [{ name: 'Дубляж (Официальный)', quality: '1080p' }];
-          trList.forEach(tr => {
-            const rV = tr.name || tr.title || 'Дубляж';
-            const qS = getQualityScore(tr.quality || p.quality || '1080p');
-            rawSources.push({
-              balancer: bName,
-              voice_canonical: normalizeVoiceTitle(rV),
-              voice_raw: rV,
-              quality: qS >= 1080 ? '1080p' : `${qS}p`,
-              quality_rank: qS,
-              iframe_url: iframe,
-              is_serial: false,
-              seasons: {}
-            });
-          });
-        });
-      }
-
-      // 3. Международный балансер VidSrc 1080p
-      if (m.imdb_id || m.kp_id) {
-        const vidUrl = m.imdb_id
-          ? `https://vidsrc.xyz/embed/movie/${m.imdb_id}`
-          : `https://ddbb.lol/?kp=${m.kp_id}`;
-        rawSources.push({
-          balancer: 'MultiPlayer 1080p',
-          voice_canonical: '🎬 Дубляж (Официальный)',
-          voice_raw: 'Мульти-балансер HD',
-          quality: '1080p',
-          quality_rank: 1080,
-          iframe_url: vidUrl,
-          is_serial: false,
-          seasons: {}
-        });
-      }
-
-      // Сортируем: сначала максимальное качество (1080p)
-      rawSources.sort((a, b) => b.quality_rank - a.quality_rank);
-      return rawSources;
-    }
-
-    // Группировка одинаковых озвучек из разных плееров в единый список
-    function groupAndRankVoices(sources) {
-      const map = new Map();
-      sources.forEach(src => {
-        const key = src.voice_canonical;
-        if (!map.has(key)) {
-          map.set(key, {
-            canonical: key,
-            bestQuality: src.quality,
-            bestRank: src.quality_rank,
-            balancers: [src.balancer],
-            primarySource: src,
-            allSources: [src]
-          });
-        } else {
-          const grp = map.get(key);
-          grp.allSources.push(src);
-          if (!grp.balancers.includes(src.balancer)) grp.balancers.push(src.balancer);
-          if (src.quality_rank > grp.bestRank || (src.seasons && Object.keys(src.seasons).length > 0 && !grp.primarySource.is_serial)) {
-            grp.bestRank = src.quality_rank;
-            grp.bestQuality = src.quality;
-            grp.primarySource = src;
-          }
-        }
-      });
-      return Array.from(map.values()).sort((a, b) => b.bestRank - a.bestRank);
-    }
-
-    // === 4. ОТКРЫТИЕ МОДАЛКИ, КАСТОМНЫЙ HLS-ПЛЕЕР И ВЫБОР СЕРИЙ ===
-    async function openMovieDetail(m) {
-      selectedMovie = m;
-      recordUserInterest(m, 1);
-
-      const fallbackSvg = `https://placehold.co/300x450/131b2e/38bdf8?text=${encodeURIComponent(m.title.slice(0, 16))}`;
-      document.getElementById('m-poster').src = m.poster || fallbackSvg;
-      document.getElementById('m-title').textContent = `${m.title} ${m.year ? '(' + m.year + ')' : ''}`;
-      document.getElementById('m-dir').textContent = m.director || 'Фильм / Сериал';
-      document.getElementById('m-rates').textContent = `★ ${m.rating}`;
-
-      setModalMode(false);
-      document.getElementById('modal').style.display = 'flex';
-
-      const voiceSelect = document.getElementById('m-voice');
-      const voiceLbl = document.getElementById('voice-status-lbl');
-      voiceLbl.textContent = '⏳ Опрашиваем Kodik, Alloha, Collaps и Videocdn...';
-      voiceSelect.innerHTML = `<option value="Любая">Поиск лучших потоков 1080p...</option>`;
-
-      const allSources = await fetchAllBalancerSources(m);
-      unifiedVoiceGroups = groupAndRankVoices(allSources);
-
-      if (unifiedVoiceGroups.length === 0) {
-        voiceLbl.textContent = '⚡ Автоматический подбор дорожки на сервере:';
-        voiceSelect.innerHTML = `<option value="🎬 Дубляж (Официальный)">🎬 Дубляж (Автопоиск 1080p)</option>`;
-        return;
-      }
-
-      voiceLbl.textContent = `🎙 Объединенный список озвучек (${unifiedVoiceGroups.length}):`;
-      voiceSelect.innerHTML = unifiedVoiceGroups.map((g, i) =>
-        `<option value="${g.canonical}" data-idx="${i}">${g.canonical} — 🔥 ${g.bestQuality} [${g.balancers.join(' / ')}]</option>`
-      ).join('');
-
-      currentVoiceGroup = unifiedVoiceGroups[0];
-      voiceSelect.onchange = () => {
-        const idx = voiceSelect.selectedIndex;
-        currentVoiceGroup = unifiedVoiceGroups[idx] || unifiedVoiceGroups[0];
-        renderSeasonsAndEpisodes(currentVoiceGroup.primarySource);
-        if (isWatchOnlineMode) renderBalancerTabsAndPlay();
-      };
-
-      renderSeasonsAndEpisodes(currentVoiceGroup.primarySource);
-    }
-
-    function setModalMode(watchOnline) {
-      isWatchOnlineMode = watchOnline;
-      document.getElementById('tab-mode-watch').classList.toggle('active', watchOnline);
-      document.getElementById('tab-mode-dl').classList.toggle('active', !watchOnline);
-      document.getElementById('player-section').classList.toggle('active', watchOnline);
-      document.getElementById('dl-options-wrap').style.display = watchOnline ? 'none' : 'flex';
-      document.getElementById('dl-scope-wrap').style.display = watchOnline ? 'none' : 'flex';
-
-      if (watchOnline) {
-        recordUserInterest(selectedMovie, 3);
-        renderBalancerTabsAndPlay();
-      } else {
-        stopActivePlayers();
-      }
-    }
-
-    function stopActivePlayers() {
-      if (hlsInstance) {
-        hlsInstance.destroy();
-        hlsInstance = null;
-      }
-      const vid = document.getElementById('custom-hls-video');
-      vid.pause();
-      vid.removeAttribute('src');
-      vid.style.display = 'none';
-      const ifr = document.getElementById('balancer-iframe');
-      ifr.src = '';
-      ifr.style.display = 'block';
-    }
-
-    function renderBalancerTabsAndPlay() {
-      const tabsEl = document.getElementById('balancer-tabs');
-      if (!currentVoiceGroup) return;
-
-      const availableSources = [...currentVoiceGroup.allSources];
-      let tabsHtml = '';
-
-      if (serverReachable) {
-        tabsHtml += `<button class="chip active" data-mode="custom_hls">⚡ Свой HLS-Плеер (Без рекламы)</button>`;
-      }
-      availableSources.forEach((src, i) => {
-        const isAct = (!serverReachable && i === 0) ? 'active' : '';
-        tabsHtml += `<button class="chip ${isAct}" data-mode="iframe" data-idx="${i}">▶️ ${src.balancer} (${src.quality})</button>`;
-      });
-
-      tabsEl.innerHTML = tabsHtml;
-      tabsEl.querySelectorAll('.chip').forEach(btn => {
-        btn.addEventListener('click', () => {
-          tabsEl.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          if (btn.dataset.mode === 'custom_hls') {
-            launchCustomHlsPlayer(currentVoiceGroup.primarySource);
-          } else {
-            const chosenSrc = availableSources[Number(btn.dataset.idx)] || currentVoiceGroup.primarySource;
-            launchIframePlayer(chosenSrc);
-          }
-        });
-      });
-
-      if (serverReachable) {
-        launchCustomHlsPlayer(currentVoiceGroup.primarySource);
-      } else {
-        launchIframePlayer(currentVoiceGroup.primarySource);
-      }
-    }
-
-    function getTargetEpisodeLink(sourceObj) {
-      if (!sourceObj) return '';
-      let link = sourceObj.iframe_url || '';
-      const sNum = document.getElementById('m-season').value;
-      const firstEp = Array.from(selectedEpisodesSet)[0] || '1';
-      if (sourceObj.seasons && sourceObj.seasons[sNum]?.episodes?.[firstEp]) {
-        const epVal = sourceObj.seasons[sNum].episodes[firstEp];
-        link = typeof epVal === 'string' ? epVal : (epVal.link || link);
-      }
-      if (link.startsWith('//')) link = 'https:' + link;
-      return link;
-    }
-
-    async function launchCustomHlsPlayer(sourceObj) {
-      stopActivePlayers();
-      const targetUrl = getTargetEpisodeLink(sourceObj);
-      const vid = document.getElementById('custom-hls-video');
-      const ifr = document.getElementById('balancer-iframe');
-
-      try {
-        const res = await fetch(`${serverUrl}/api/resolve_stream?url=${encodeURIComponent(targetUrl)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.stream_url && data.is_hls) {
-            ifr.style.display = 'none';
-            vid.style.display = 'block';
-            if (Hls.isSupported()) {
-              hlsInstance = new Hls();
-              hlsInstance.loadSource(data.stream_url);
-              hlsInstance.attachMedia(vid);
-              hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => vid.play().catch(() => {}));
-            } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
-              vid.src = data.stream_url;
-              vid.play().catch(() => {});
-            }
-            return;
-          }
-        }
-      } catch (e) {}
-      launchIframePlayer(sourceObj);
-    }
-
-    function launchIframePlayer(sourceObj) {
-      stopActivePlayers();
-      const ifr = document.getElementById('balancer-iframe');
-      ifr.style.display = 'block';
-      ifr.src = getTargetEpisodeLink(sourceObj);
-    }
-
-    document.getElementById('tab-mode-watch').addEventListener('click', () => setModalMode(true));
-    document.getElementById('tab-mode-dl').addEventListener('click', () => setModalMode(false));
-
-    function renderSeasonsAndEpisodes(sourceObj) {
-      const serialBox = document.getElementById('serial-box');
-      const seasonSelect = document.getElementById('m-season');
-      const seasonsObj = sourceObj?.seasons;
-
-      if (!seasonsObj || Object.keys(seasonsObj).length === 0) {
-        serialBox.classList.remove('active');
-        return;
-      }
-
-      serialBox.classList.add('active');
-      const seasonKeys = Object.keys(seasonsObj).sort((a, b) => Number(a) - Number(b));
-      seasonSelect.innerHTML = seasonKeys.map(s => {
-        const epCount = Object.keys(seasonsObj[s].episodes || {}).length;
-        return `<option value="${s}">Сезон ${s} (${epCount} сер.)</option>`;
-      }).join('');
-
-      seasonSelect.onchange = () => renderEpisodeChips(seasonsObj[seasonSelect.value]);
-      renderEpisodeChips(seasonsObj[seasonKeys[0]]);
-    }
-
-    function renderEpisodeChips(seasonData) {
-      const epGrid = document.getElementById('ep-grid');
-      const episodesObj = seasonData?.episodes || {};
-      const epNums = Object.keys(episodesObj).sort((a, b) => Number(a) - Number(b));
-
-      selectedEpisodesSet = new Set([epNums[0] || '1']);
-      epGrid.innerHTML = epNums.map(ep => `
-        <div class="ep-chip ${ep === epNums[0] ? 'selected' : ''}" data-ep="${ep}">Сер. ${ep}</div>
-      `).join('');
-
-      epGrid.querySelectorAll('.ep-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-          const ep = chip.dataset.ep;
-          if (isWatchOnlineMode) {
-            selectedEpisodesSet = new Set([ep]);
-            epGrid.querySelectorAll('.ep-chip').forEach(c => c.classList.remove('selected'));
-            chip.classList.add('selected');
-            renderBalancerTabsAndPlay();
-          } else {
-            if (selectedEpisodesSet.has(ep) && selectedEpisodesSet.size > 1) {
-              selectedEpisodesSet.delete(ep);
-              chip.classList.remove('selected');
-            } else {
-              selectedEpisodesSet.add(ep);
-              chip.classList.add('selected');
-            }
-          }
-        });
-      });
-    }
-
-    document.querySelectorAll('.scope-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.scope-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedDownloadScope = btn.dataset.scope;
-        document.getElementById('ep-picker-wrap').style.display = (selectedDownloadScope === 'selected') ? 'flex' : 'none';
-      });
-    });
-
-    document.getElementById('close-modal-btn').addEventListener('click', () => {
-      stopActivePlayers();
-      document.getElementById('modal').style.display = 'none';
-    });
-
-    // === 5. ОТПРАВКА НА СКАЧИВАНИЕ (ГИБРИДНЫЙ МОСТ) ===
+    // === 9. ОТПРАВКА НА СКАЧИВАНИЕ И ОПТИМИЗИРОВАННЫЙ ПИНГ СЕРВЕРА ===
     document.getElementById('send-task-btn').addEventListener('click', async () => {
       if (!selectedMovie) return;
+      playSwitchSound('pop');
       recordUserInterest(selectedMovie, 5);
 
       const isSerial = document.getElementById('serial-box').classList.contains('active');
       const dlMode = isSerial ? selectedDownloadScope : 'movie';
-      const chosenIframe = currentVoiceGroup?.primarySource?.iframe_url || '';
 
       const payload = {
         action: "DOWNLOAD_MEDIA",
@@ -1212,12 +1660,12 @@
         kp_id: selectedMovie.kp_id || '',
         imdb_id: selectedMovie.imdb_id || '',
         overview: selectedMovie.overview || '',
-        voice: document.getElementById('m-voice').value || '🎬 Дубляж (Официальный)',
-        iframe_url: chosenIframe,
+        voice: currentVoiceGroup?.canonical || '🎬 Дубляж (Официальный)',
+        iframe_url: currentPlayerSource?.iframe_url || '',
         quality: document.getElementById('m-quality').value,
         format: document.getElementById('m-format').value,
         download_mode: dlMode,
-        season: isSerial ? document.getElementById('m-season').value : '1',
+        season: isSerial ? currentSeasonKey : '1',
         episodes: isSerial ? Array.from(selectedEpisodesSet) : [],
         user_id: userTgId ? Number(userTgId) : null
       };
@@ -1225,26 +1673,28 @@
       localTasks.unshift({
         id: 'loc_' + Date.now(),
         title: `${payload.title} (${payload.voice})`,
-        stage: 'Задача передана на ПК (Приоритет 1080p)...'
+        stage: 'Передано на сервер (Приоритет 1080p)...'
       });
       localStorage.setItem('vg_tasks_v3', JSON.stringify(localTasks.slice(0, 15)));
 
       const btn = document.getElementById('send-task-btn');
-      btn.textContent = '⏳ Отправка задания на сервер...';
+      btn.textContent = '⏳ Передача задания...';
 
-      try {
-        const res = await fetch(`${serverUrl}/api/webapp_task`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          btn.textContent = '🚀 Скачать в ТГК + продублировать в ЛС';
-          document.getElementById('modal').style.display = 'none';
-          document.querySelector('[data-pane="pane-tracker"]').click();
-          return;
-        }
-      } catch (e) {}
+      if (serverReachable) {
+        try {
+          const res = await fetch(`${serverUrl}/api/webapp_task`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            btn.textContent = '🚀 Скачать в ТГК + прислать мне в ЛС';
+            closeModalWindow();
+            document.querySelector('[data-pane="pane-tracker"]').click();
+            return;
+          }
+        } catch (e) {}
+      }
 
       try {
         const tgRes = await fetch(`https://api.telegram.org/bot${CLOUD_BOT_TOKEN}/sendMessage`, {
@@ -1256,8 +1706,8 @@
           })
         });
         if (tgRes.ok) {
-          btn.textContent = '🚀 Скачать в ТГК + продублировать в ЛС';
-          document.getElementById('modal').style.display = 'none';
+          btn.textContent = '🚀 Скачать в ТГК + прислать мне в ЛС';
+          closeModalWindow();
           document.querySelector('[data-pane="pane-tracker"]').click();
           return;
         }
@@ -1269,79 +1719,18 @@
       }
     });
 
-    // === 6. УМНЫЕ РЕКОМЕНДАЦИИ И ТРЕКЕР ===
-    function extractFranchiseRoot(title) {
-      return title
-        .replace(/\(\d{4}\)/g, '')
-        .split(/[:—\-–.|]/)[0]
-        .replace(/\b(\d+|I|II|III|IV|V|VI|VII|VIII|IX|X|Часть|Сезон|Фильм|Эпизод)\b.*$/i, '')
-        .trim();
-    }
-
-    function recordUserInterest(movie, weight = 1) {
-      if (!movie || !movie.title) return;
-      const root = extractFranchiseRoot(movie.title);
-      const existing = tasteHistory.find(x => x.root.toLowerCase() === root.toLowerCase());
-      if (existing) {
-        existing.score += weight;
-        existing.genre = (movie.genres && movie.genres[0]) || existing.genre;
-        existing.ts = Date.now();
-      } else {
-        tasteHistory.unshift({
-          root: root,
-          genre: (movie.genres && movie.genres[0]) || 'фантастика',
-          score: weight,
-          ts: Date.now()
-        });
-      }
-      tasteHistory.sort((a, b) => b.score - a.score || b.ts - a.ts);
-      tasteHistory = tasteHistory.slice(0, 12);
-      localStorage.setItem('vg_taste_v3', JSON.stringify(tasteHistory));
-    }
-
-    async function renderSmartRecommendations() {
-      const container = document.getElementById('recs-shelves');
-      const label = document.getElementById('taste-profile-label');
-      container.innerHTML = `<div class="status-msg">Собираем персональные полки...</div>`;
-
-      const shelves = [];
-      if (tasteHistory.length > 0) {
-        const top1 = tasteHistory[0];
-        label.textContent = `Твой главный интерес: «${top1.root}» (${top1.score} балл.)`;
-        shelves.push({ title: `🎬 Все части, сериалы и спин-оффы: «${top1.root}»`, query: top1.root });
-        if (tasteHistory[1]) {
-          shelves.push({ title: `🔥 Похожее и продолжения: «${tasteHistory[1].root}»`, query: tasteHistory[1].root });
-        }
-        shelves.push({ title: `✨ Лучшее в жанре: ${top1.genre}`, query: top1.genre });
-      } else {
-        shelves.push(
-          { title: `🌌 Вселенная Звёздных войн`, query: `Звёздные войны` },
-          { title: `🏆 Хиты в 1080p`, query: `Дюна` }
-        );
-      }
-
-      container.innerHTML = '';
-      for (const sh of shelves) {
-        const items = await fetchMoviesByQuery(sh.query);
-        if (!items.length) continue;
-        const block = document.createElement('div');
-        block.className = 'shelf-block';
-        block.innerHTML = `<div class="shelf-title">${sh.title}</div><div class="shelf-row"></div>`;
-        renderMoviesToGrid(items.slice(0, 10), block.querySelector('.shelf-row'));
-        container.appendChild(block);
-      }
-    }
-
-    document.getElementById('reset-taste-btn').addEventListener('click', () => {
-      tasteHistory = [];
-      localStorage.setItem('vg_taste_v3', '[]');
-      renderSmartRecommendations();
-    });
-
-    async function pollServerStatus() {
+    // Не спамим запросами на 127.0.0.1 с телефона, если сайт открыт по https на github.io
+    async function checkServerOnce() {
       const dot = document.getElementById('srv-dot');
+      const isHttpsRemote = location.protocol === 'https:' && serverUrl.startsWith('http://127.0.0.1');
+      if (isHttpsRemote) {
+        serverReachable = false;
+        dot.classList.remove('online');
+        renderTrackerOffline();
+        return;
+      }
       try {
-        const res = await fetch(`${serverUrl}/api/status`, { signal: AbortSignal.timeout(2500) });
+        const res = await fetch(`${serverUrl}/api/status`, { signal: AbortSignal.timeout(1800) });
         if (res.ok) {
           const data = await res.json();
           serverReachable = true;
@@ -1356,14 +1745,20 @@
       renderTrackerOffline();
     }
 
+    document.getElementById('refresh-srv-btn').addEventListener('click', () => {
+      playSwitchSound('tick');
+      checkServerOnce();
+    });
+
     async function sendJobControl(jobId, action) {
+      playSwitchSound('tick');
       try {
         await fetch(`${serverUrl}/api/control`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ job_id: jobId, action: action })
         });
-        pollServerStatus();
+        checkServerOnce();
       } catch (e) {}
     }
 
@@ -1379,7 +1774,7 @@
         <div class="task-card">
           <div class="task-top">
             <span class="task-title">${t.title}</span>
-            <div class="task-ctrl-btns">
+            <div style="display:flex; gap:5px;">
               ${t.status === 'paused'
                 ? `<button class="mini-ctrl" onclick="sendJobControl('${jid}','resume')">▶ Пуск</button>`
                 : `<button class="mini-ctrl" onclick="sendJobControl('${jid}','pause')">⏸ Пауза</button>`}
@@ -1392,14 +1787,14 @@
       `).join('');
 
       if (historyList.length > 0) {
-        html += `<div style="font-size:12px; font-weight:700; margin:12px 0 8px; color:var(--text-muted);">✅ Выгружено в ТГК и очищено с ПК:</div>`;
+        html += `<div style="font-size:12px; font-weight:800; margin:14px 0 8px; color:var(--text-muted);">✅ Выгружено в ТГК:</div>`;
         html += historyList.map(h => `
           <div class="task-card">
             <div class="task-top">
               <span class="task-title">${h.title} (${h.quality})</span>
               <span style="font-size:11px; color:var(--green);">${h.size}</span>
             </div>
-            ${h.post_url ? `<a href="${h.post_url}" target="_blank" style="font-size:11.5px; color:var(--accent);">🍿 Открыть в ТГК</a>` : ''}
+            ${h.post_url ? `<a href="${h.post_url}" target="_blank" style="font-size:11.5px; color:var(--accent);">🍿 Открыть в закрытом ТГК</a>` : ''}
           </div>
         `).join('');
       }
@@ -1409,7 +1804,7 @@
     function renderTrackerOffline() {
       const container = document.getElementById('tasks-container');
       if (!localTasks.length) {
-        container.innerHTML = `<div class="status-msg">Задачи отправляются через облачный мост Telegram. Прогресс-бар обновляется в чате с ботом!</div>`;
+        container.innerHTML = `<div class="status-msg">Активен облачный мост Telegram. Живой прогресс-бар отображается прямо в чате бота!</div>`;
         return;
       }
       container.innerHTML = localTasks.map(t => `
@@ -1421,9 +1816,65 @@
     }
 
     document.getElementById('clear-tasks-btn').addEventListener('click', () => {
+      playSwitchSound('tick');
       localTasks = [];
       localStorage.setItem('vg_tasks_v3', '[]');
-      pollServerStatus();
+      checkServerOnce();
+    });
+
+    // Рекомендации и списки
+    function extractFranchiseRoot(title) {
+      return title.replace(/\(\d{4}\)/g, '').split(/[:—\-–.|]/)[0].replace(/\b(\d+|I|II|III|IV|V|Часть|Сезон|Фильм)\b.*$/i, '').trim();
+    }
+
+    function recordUserInterest(movie, weight = 1) {
+      if (!movie || !movie.title) return;
+      const root = extractFranchiseRoot(movie.title);
+      const existing = tasteHistory.find(x => x.root.toLowerCase() === root.toLowerCase());
+      if (existing) {
+        existing.score += weight;
+        existing.ts = Date.now();
+      } else {
+        tasteHistory.unshift({ root, genre: (movie.genres && movie.genres[0]) || 'фантастика', score: weight, ts: Date.now() });
+      }
+      tasteHistory.sort((a, b) => b.score - a.score || b.ts - a.ts);
+      tasteHistory = tasteHistory.slice(0, 12);
+      localStorage.setItem('vg_taste_v3', JSON.stringify(tasteHistory));
+    }
+
+    async function renderSmartRecommendations() {
+      const container = document.getElementById('recs-shelves');
+      const label = document.getElementById('taste-profile-label');
+      container.innerHTML = `<div class="status-msg">Формируем персональные полки...</div>`;
+
+      const shelves = [];
+      if (tasteHistory.length > 0) {
+        const top1 = tasteHistory[0];
+        label.textContent = `Твой фаворит: «${top1.root}» (${top1.score} балл.)`;
+        shelves.push({ title: `🎬 Все части и спин-оффы: «${top1.root}»`, query: top1.root });
+        if (tasteHistory[1]) shelves.push({ title: `🔥 Похожее и продолжения: «${tasteHistory[1].root}»`, query: tasteHistory[1].root });
+        shelves.push({ title: `✨ Топ в жанре: ${top1.genre}`, query: top1.genre });
+      } else {
+        shelves.push({ title: `🌌 Вселенная Звёздных войн`, query: `Звёздные войны` }, { title: `🏆 Хиты в 1080p`, query: `Дюна` });
+      }
+
+      container.innerHTML = '';
+      for (const sh of shelves) {
+        const items = await fetchMoviesByQuery(sh.query);
+        if (!items.length) continue;
+        const block = document.createElement('div');
+        block.className = 'shelf-block';
+        block.innerHTML = `<div class="shelf-title">${sh.title}</div><div class="shelf-row"></div>`;
+        renderMoviesToGrid(items.slice(0, 10), block.querySelector('.shelf-row'));
+        container.appendChild(block);
+      }
+    }
+
+    document.getElementById('reset-taste-btn').addEventListener('click', () => {
+      playSwitchSound('tick');
+      tasteHistory = [];
+      localStorage.setItem('vg_taste_v3', '[]');
+      renderSmartRecommendations();
     });
 
     let currentListMode = 'watchlist';
@@ -1442,21 +1893,20 @@
       }
     }
 
-    document.getElementById('btn-show-watchlist').addEventListener('click', (e) => {
+    document.getElementById('btn-show-watchlist').addEventListener('click', () => {
+      playSwitchSound('tick');
       currentListMode = 'watchlist';
-      e.target.classList.add('active');
-      document.getElementById('btn-show-watched').classList.remove('active');
       renderSavedLists();
     });
-    document.getElementById('btn-show-watched').addEventListener('click', (e) => {
+    document.getElementById('btn-show-watched').addEventListener('click', () => {
+      playSwitchSound('tick');
       currentListMode = 'watched';
-      e.target.classList.add('active');
-      document.getElementById('btn-show-watchlist').classList.remove('active');
       renderSavedLists();
     });
 
     document.getElementById('m-add-watch').addEventListener('click', () => {
       if (!selectedMovie) return;
+      playSwitchSound('pop');
       const i = watchlist.findIndex(x => x.title === selectedMovie.title);
       if (i >= 0) watchlist.splice(i, 1); else watchlist.unshift(selectedMovie);
       localStorage.setItem('vg_watchlist', JSON.stringify(watchlist));
@@ -1464,6 +1914,7 @@
     });
     document.getElementById('m-add-watched').addEventListener('click', () => {
       if (!selectedMovie) return;
+      playSwitchSound('pop');
       const i = watched.findIndex(x => x.title === selectedMovie.title);
       if (i >= 0) watched.splice(i, 1); else watched.unshift(selectedMovie);
       localStorage.setItem('vg_watched', JSON.stringify(watched));
@@ -1473,11 +1924,10 @@
     let debounceTimer;
     document.getElementById('search-input').addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => searchMovies(e.target.value.trim()), 350);
+      debounceTimer = setTimeout(() => searchMovies(e.target.value.trim()), 320);
     });
 
-    setInterval(pollServerStatus, 3500);
-    pollServerStatus();
+    checkServerOnce();
     searchMovies('');
   </script>
 </body>

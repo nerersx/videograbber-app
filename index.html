@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>VideoGrabber Cinema</title>
-  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
@@ -54,7 +53,13 @@
     }
     .search-box input:focus { border-color: var(--accent); }
 
-    /* Сетка постеров */
+    .status-msg {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 30px 10px;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -106,7 +111,6 @@
       color: var(--text-muted);
     }
 
-    /* Модальное окно деталей фильма */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -128,10 +132,7 @@
       flex-direction: column;
       gap: 12px;
     }
-    .modal-header {
-      display: flex;
-      gap: 12px;
-    }
+    .modal-header { display: flex; gap: 12px; }
     .modal-poster {
       width: 80px;
       aspect-ratio: 2/3;
@@ -150,10 +151,7 @@
       font-size: 12px;
     }
     .control-row label { color: var(--text-muted); font-weight: 600; }
-    .select-wrap {
-      display: flex;
-      gap: 6px;
-    }
+    .select-wrap { display: flex; gap: 6px; }
     select {
       flex: 1;
       background: var(--bg);
@@ -198,12 +196,13 @@
   </header>
 
   <div class="search-box">
-    <input type="text" id="search-input" placeholder="Поиск фильма в TMDB (на русском)...">
+    <input type="text" id="search-input" placeholder="Поиск фильма (введите название)...">
   </div>
 
+  <div id="status" class="status-msg">Загрузка фильмов...</div>
   <div class="grid" id="movies-grid"></div>
 
-  <!-- Модалка скачивания -->
+  <!-- Модальное окно -->
   <div class="modal-overlay" id="modal">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -247,35 +246,74 @@
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand(); // Разворачиваем на весь экран смартфона
+    const tg = window.Telegram?.WebApp;
+    if (tg) tg.expand();
 
-    // Публичный бесплатный ключ TMDB (v3 auth)
     const TMDB_API_KEY = "3b006f1406e23b9d6a2f8b5a3e14fb5e";
-    let selectedMovie = null;
+    // Используем проксирующий эндпоинт Cloudflare для обхода блокировок api.themoviedb.org
+    const PROXY_URL = "https://corsproxy.io/?url=";
+    const TMDB_BASE = "https://api.themoviedb.org/3";
 
+    let selectedMovie = null;
     const grid = document.getElementById('movies-grid');
+    const statusEl = document.getElementById('status');
     const searchInput = document.getElementById('search-input');
     const modal = document.getElementById('modal');
 
-    // Дефолтная подборка популярных фильмов при запуске
+    async function apiFetch(endpoint) {
+      const fullUrl = `${TMDB_BASE}${endpoint}`;
+      try {
+        // Пробуем прямой запрос
+        const r = await fetch(fullUrl);
+        if (r.ok) return await r.json();
+      } catch(e) {}
+
+      // Если прямой заблокирован провайдером — идём через CORS-прокси
+      const proxyReq = `${PROXY_URL}${encodeURIComponent(fullUrl)}`;
+      const res = await fetch(proxyReq);
+      return await res.json();
+    }
+
     async function loadTrending() {
-      const res = await fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_API_KEY}&language=ru-RU`);
-      const data = await res.json();
-      renderMovies(data.results || []);
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Загрузка новинок...';
+      try {
+        const data = await apiFetch(`/trending/movie/week?api_key=${TMDB_API_KEY}&language=ru-RU`);
+        renderMovies(data.results || []);
+      } catch (err) {
+        statusEl.textContent = 'Ошибка загрузки. Проверьте интернет-соединение.';
+      }
     }
 
     async function searchTMDB(query) {
       if (!query.trim()) { loadTrending(); return; }
-      const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=ru-RU&query=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      renderMovies(data.results || []);
+      statusEl.style.display = 'block';
+      statusEl.textContent = `Поиск «${query}»...`;
+      try {
+        const data = await apiFetch(`/search/movie?api_key=${TMDB_API_KEY}&language=ru-RU&query=${encodeURIComponent(query)}`);
+        const results = data.results || [];
+        if (results.length === 0) {
+          grid.innerHTML = '';
+          statusEl.textContent = 'Ничего не найдено. Попробуйте другое название.';
+        } else {
+          renderMovies(results);
+        }
+      } catch (err) {
+        statusEl.textContent = 'Ошибка поиска. Пробуем повторить...';
+      }
     }
 
     function renderMovies(movies) {
       grid.innerHTML = '';
-      movies.forEach(m => {
-        if (!m.poster_path) return;
+      const valid = movies.filter(m => m.poster_path);
+      if (valid.length === 0) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Фильмы без постеров скрыты.';
+        return;
+      }
+      statusEl.style.display = 'none';
+
+      valid.forEach(m => {
         const card = document.createElement('div');
         card.className = 'movie-card';
         const year = (m.release_date || '').slice(0, 4);
@@ -303,9 +341,8 @@
       document.getElementById('m-overview').textContent = m.overview || 'Описание отсутствует.';
       document.getElementById('m-rates').textContent = `★ TMDB: ${m.vote_average ? m.vote_average.toFixed(1) : '—'}`;
 
-      // Запрашиваем режиссёра фильма из команды TMDB
       try {
-        const credits = await fetch(`https://api.themoviedb.org/3/movie/${m.id}/credits?api_key=${TMDB_API_KEY}&language=ru-RU`).then(r => r.json());
+        const credits = await apiFetch(`/movie/${m.id}/credits?api_key=${TMDB_API_KEY}&language=ru-RU`);
         const dir = (credits.crew || []).find(c => c.job === 'Director');
         document.getElementById('m-dir').textContent = dir ? `Реж: ${dir.name}` : 'Реж: Неизвестен';
       } catch(e) {
@@ -322,12 +359,11 @@
     let debounceTimer;
     searchInput.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => searchTMDB(e.target.value), 400);
+      debounceTimer = setTimeout(() => searchTMDB(e.target.value), 350);
     });
 
-    // Отправка задания в бот
     document.getElementById('send-task-btn').addEventListener('click', () => {
-      if (!selectedMovie) return;
+      if (!selectedMovie || !tg) return;
 
       const payload = {
         action: "DOWNLOAD_MOVIE",
@@ -343,7 +379,6 @@
         subs: document.getElementById('m-subs').value
       };
 
-      // Передаём JSON напрямую боту
       tg.sendData(JSON.stringify(payload));
       tg.close();
     });

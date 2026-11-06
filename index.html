@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>VideoGrabber Cinema</title>
+  <title>VideoGrabber Cinema v2.0</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
       --bg: #090d16;
       --card-bg: #131b2e;
+      --card-hover: #1a2540;
       --accent: #38bdf8;
       --accent-hover: #0284c7;
+      --green: #22c55e;
+      --amber: #f59e0b;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: #1e293b;
@@ -21,19 +24,18 @@
       background: var(--bg);
       color: var(--text);
       padding: 14px;
-      padding-bottom: 30px;
+      padding-bottom: 78px;
+      min-height: 100vh;
     }
+
+    /* Шапка */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 14px;
     }
-    .brand-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .brand-left { display: flex; align-items: center; gap: 10px; }
     .logo-badge {
       background: linear-gradient(135deg, #0284c7, #2563eb);
       color: #fff;
@@ -41,6 +43,7 @@
       font-size: 13px;
       padding: 6px 10px;
       border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35);
     }
     .key-btn {
       background: var(--card-bg);
@@ -81,10 +84,12 @@
       cursor: pointer;
     }
 
-    .search-box {
-      position: relative;
-      margin-bottom: 16px;
-    }
+    /* Вкладки разделов */
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Поиск */
+    .search-box { position: relative; margin-bottom: 14px; }
     .search-box input {
       width: 100%;
       background: var(--card-bg);
@@ -97,6 +102,33 @@
     }
     .search-box input:focus { border-color: var(--accent); }
 
+    /* Горизонтальные чипсы фильтра/рекомендаций */
+    .chips-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      scrollbar-width: none;
+    }
+    .chips-row::-webkit-scrollbar { display: none; }
+    .chip {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .chip.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
     .status-msg {
       text-align: center;
       font-size: 13px;
@@ -105,11 +137,12 @@
       line-height: 1.5;
     }
 
+    /* Сетка карточек */
     .grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
-      max-width: 760px;
+      max-width: 820px;
       margin: 0 auto;
     }
     @media (min-width: 600px) {
@@ -123,7 +156,8 @@
       display: flex;
       flex-direction: column;
       cursor: pointer;
-      transition: transform 0.15s;
+      position: relative;
+      transition: transform 0.15s, border-color 0.15s;
     }
     .movie-card:hover { transform: translateY(-2px); border-color: var(--accent); }
     .poster-wrap {
@@ -133,7 +167,7 @@
       position: relative;
       overflow: hidden;
     }
-    .poster-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .poster-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .rate-badge {
       position: absolute;
       top: 6px;
@@ -143,6 +177,17 @@
       color: #fbbf24;
       font-weight: 700;
       font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .saved-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(34, 197, 94, 0.9);
+      color: #fff;
+      font-weight: 700;
+      font-size: 10px;
       padding: 2px 6px;
       border-radius: 6px;
     }
@@ -159,11 +204,125 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .card-meta {
-      font-size: 11px;
-      color: var(--text-muted);
+    .card-meta { font-size: 11px; color: var(--text-muted); }
+
+    /* Блок Letterboxd Sync */
+    .lb-sync-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .lb-sync-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .lb-sync-row input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+    }
+    .lb-btn {
+      background: #00e054;
+      color: #000;
+      border: none;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
     }
 
+    /* Трекер задач */
+    .task-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .task-poster {
+      width: 48px;
+      height: 72px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #1e293b;
+      flex-shrink: 0;
+    }
+    .task-info { flex: 1; min-width: 0; }
+    .task-title { font-size: 13.5px; font-weight: 700; margin-bottom: 4px; }
+    .task-meta { font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px; }
+    .task-bar {
+      width: 100%;
+      height: 5px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .task-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      width: 100%;
+      animation: pulseBar 1.8s infinite ease-in-out;
+    }
+    @keyframes pulseBar {
+      0%, 100% { opacity: 0.65; }
+      50% { opacity: 1; }
+    }
+
+    /* Нижняя навигация */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(19, 27, 46, 0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 6px 12px;
+      z-index: 90;
+    }
+    .nav-item {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      position: relative;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-icon { font-size: 17px; }
+    .nav-badge {
+      position: absolute;
+      top: -2px;
+      right: 4px;
+      background: var(--accent);
+      color: #000;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    /* Модалка фильма */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -181,30 +340,48 @@
       border-top: 1px solid var(--border);
       border-radius: 20px 20px 0 0;
       padding: 18px;
-      max-height: 85vh;
+      max-height: 88vh;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 11px;
     }
     .modal-header { display: flex; gap: 12px; }
     .modal-poster {
-      width: 80px;
+      width: 84px;
       aspect-ratio: 2/3;
       border-radius: 8px;
       object-fit: cover;
       background: #1e293b;
+      flex-shrink: 0;
     }
+    .modal-titles { flex: 1; }
     .modal-titles h2 { font-size: 16px; margin-bottom: 4px; }
     .modal-titles p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
-    .overview { font-size: 12.5px; color: #cbd5e1; line-height: 1.45; max-height: 110px; overflow-y: auto; }
-
-    .control-row {
+    .list-btns-row {
       display: flex;
-      flex-direction: column;
       gap: 6px;
-      font-size: 12px;
+      margin-top: 8px;
     }
+    .mini-list-btn {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 8px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .mini-list-btn.active {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(34, 197, 94, 0.1);
+    }
+    .overview { font-size: 12.5px; color: #cbd5e1; line-height: 1.45; max-height: 95px; overflow-y: auto; }
+
+    .control-row { display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
     .control-row label { color: var(--text-muted); font-weight: 600; }
     .select-wrap { display: flex; gap: 6px; }
     select {
@@ -212,22 +389,22 @@
       background: var(--bg);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 10px;
+      padding: 9px 10px;
       border-radius: 8px;
-      font-size: 13px;
+      font-size: 12.5px;
       outline: none;
     }
 
     .action-btn {
       background: var(--accent);
       color: #000;
-      font-weight: 700;
-      font-size: 15px;
+      font-weight: 800;
+      font-size: 14.5px;
       border: none;
       border-radius: 12px;
-      padding: 14px;
+      padding: 13px;
       cursor: pointer;
-      margin-top: 6px;
+      margin-top: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -238,7 +415,7 @@
       text-align: center;
       font-size: 13px;
       color: var(--text-muted);
-      padding: 6px;
+      padding: 4px;
       cursor: pointer;
     }
   </style>
@@ -248,24 +425,70 @@
   <header>
     <div class="brand-left">
       <div class="logo-badge">▶ VideoGrabber</div>
-      <span style="font-size: 13px; font-weight: 600;">Удалённый пульт ПК</span>
+      <span style="font-size: 13px; font-weight: 600;">Cinema Studio v2.0</span>
     </div>
-    <button class="key-btn" id="toggle-key-btn" title="Настроить API-ключ Кинопоиска">🔑 API КП</button>
+    <button class="key-btn" id="toggle-key-btn">🔑 API КП</button>
   </header>
 
   <div class="key-box" id="key-box">
-    <input type="text" id="kp-key-input" placeholder="Вставьте API-ключ kinopoiskapiunofficial.tech (необязательно)">
+    <input type="text" id="kp-key-input" placeholder="API-ключ kinopoiskapiunofficial.tech (для 100% постеров РФ)">
     <button id="save-key-btn">Сохранить</button>
   </div>
 
-  <div class="search-box">
-    <input type="text" id="search-input" placeholder="Введите название фильма (например: Дюна)...">
+  <!-- ВКЛАДКА 1: Поиск -->
+  <div class="tab-pane active" id="pane-search">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Поиск любого фильма (на русском или англ)...">
+    </div>
+    <div id="status" class="status-msg">Загрузка каталога...</div>
+    <div class="grid" id="movies-grid"></div>
   </div>
 
-  <div id="status" class="status-msg">Загрузка популярных фильмов...</div>
-  <div class="grid" id="movies-grid"></div>
+  <!-- ВКЛАДКА 2: Умные рекомендации -->
+  <div class="tab-pane" id="pane-recs">
+    <div class="chips-row" id="rec-chips">
+      <button class="chip active" data-q="Похожие на твои списки">✨ По твоему вкусу</button>
+      <button class="chip" data-q="Лука Гуаданьино">🍋 Эстетика и лето</button>
+      <button class="chip" data-q="Вонг Кар-Вай">🌃 Неон и атмосфера</button>
+      <button class="chip" data-q="Уэс Андерсон">🎞 Авторский стиль</button>
+      <button class="chip" data-q="Драма 2023">🏆 Фестивальное кино</button>
+    </div>
+    <div id="recs-status" class="status-msg" style="display:none;">Подбираем рекомендации...</div>
+    <div class="grid" id="recs-grid"></div>
+  </div>
 
-  <!-- Модалка -->
+  <!-- ВКЛАДКА 3: Letterboxd + Списки (Watchlist / Просмотрено) -->
+  <div class="tab-pane" id="pane-lists">
+    <div class="lb-sync-card">
+      <div style="font-size: 12.5px; font-weight: 700; display:flex; justify-content:space-between;">
+        <span>🟢 Синхронизация с Letterboxd</span>
+        <span id="lb-status-label" style="color:var(--text-muted); font-weight:500;">Публичный профиль</span>
+      </div>
+      <div class="lb-sync-row">
+        <input type="text" id="lb-user-input" placeholder="Твой ник на Letterboxd (например: dave)">
+        <button class="lb-btn" id="lb-sync-btn">Загрузить списки</button>
+      </div>
+    </div>
+
+    <div class="chips-row">
+      <button class="chip active" id="btn-show-watchlist">🔖 Хочу посмотреть (<span id="cnt-watch">0</span>)</button>
+      <button class="chip" id="btn-show-watched">👁 Просмотренные (<span id="cnt-watched">0</span>)</button>
+    </div>
+
+    <div id="lists-empty" class="status-msg">Список пока пуст. Импортируйте профиль Letterboxd выше или добавляйте фильмы из поиска!</div>
+    <div class="grid" id="lists-grid"></div>
+  </div>
+
+  <!-- ВКЛАДКА 4: Трекер закачек (В ТГК + в ЛС бота) -->
+  <div class="tab-pane" id="pane-tracker">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <span style="font-size:13px; font-weight:700;">📡 Очередь отправок на ПК и в ТГ</span>
+      <button class="key-btn" id="clear-tasks-btn">Очистить</button>
+    </div>
+    <div id="tasks-container"></div>
+  </div>
+
+  <!-- Модальное окно выбора озвучки, качества и субтитров -->
   <div class="modal-overlay" id="modal">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -273,14 +496,30 @@
         <div class="modal-titles">
           <h2 id="m-title">Название</h2>
           <p id="m-dir">Режиссёр / Жанр: —</p>
-          <p id="m-rates" style="color: #fbbf24; font-weight:600; margin-top:4px;">★ Рейтинг: —</p>
+          <p id="m-rates" style="color: #fbbf24; font-weight:600; margin-top:3px;">★ Рейтинг: —</p>
+          <div class="list-btns-row">
+            <button class="mini-list-btn" id="m-add-watch">🔖 Хочу посмотреть</button>
+            <button class="mini-list-btn" id="m-add-watched">👁 Просмотрено</button>
+          </div>
         </div>
       </div>
 
       <div class="overview" id="m-overview"></div>
 
       <div class="control-row">
-        <label>Качество и формат:</label>
+        <label>🎙 Озвучка / Аудиодорожка:</label>
+        <select id="m-voice">
+          <option value="Дубляж">🎬 Дубляж (Официальный / Мосфильм)</option>
+          <option value="Оригинал">🇬🇧 Оригинал (Original Audio + Subtitles)</option>
+          <option value="HDRezka">🎙 HDRezka Studio / Red Head Sound</option>
+          <option value="Кубик в Кубе">🎙 Кубик в Кубе / LostFilm / Jaskier</option>
+          <option value="Авторский">🎙 Авторский перевод (Гоблин / Гаврилов)</option>
+          <option value="Любая">⚡ Автовыбор (Лучшее доступное качество)</option>
+        </select>
+      </div>
+
+      <div class="control-row">
+        <label>📺 Качество и формат контейнера:</label>
         <div class="select-wrap">
           <select id="m-quality">
             <option value="1080">1080p (Full HD)</option>
@@ -288,164 +527,252 @@
             <option value="480">480p (Компактный)</option>
           </select>
           <select id="m-format">
-            <option value="mp4" selected>MP4</option>
+            <option value="mp4" selected>MP4 (Стриминг iOS/Android)</option>
             <option value="mkv">MKV</option>
+            <option value="mov">MOV</option>
           </select>
         </div>
       </div>
 
       <div class="control-row">
-        <label>Субтитры:</label>
+        <label>💬 Субтитры:</label>
         <select id="m-subs">
-          <option value="soft">Вшить мягкой дорожкой (Softsubs)</option>
-          <option value="hard">Вжечь в видео (Hardsub для ТГ)</option>
+          <option value="soft">Softsubs (Вшить отключаемой дорожкой)</option>
+          <option value="hard">Hardsub (Вжечь в кадр для плеера ТГ)</option>
+          <option value="external">Отдельным .srt файлом в ЛС и канал</option>
           <option value="none">Без субтитров</option>
         </select>
       </div>
 
-      <button class="action-btn" id="send-task-btn">🚀 Отправить на скачивание в ПК</button>
+      <button class="action-btn" id="send-task-btn">🚀 Скачать в ТГК + прислать в ЛС</button>
       <div class="close-btn" id="close-modal-btn">Закрыть</div>
     </div>
   </div>
+
+  <!-- Нижнее меню -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-pane="pane-search">
+      <span class="nav-icon">🔍</span>
+      <span>Поиск</span>
+    </button>
+    <button class="nav-item" data-pane="pane-recs">
+      <span class="nav-icon">✨</span>
+      <span>Для тебя</span>
+    </button>
+    <button class="nav-item" data-pane="pane-lists">
+      <span class="nav-icon">📌</span>
+      <span>Списки (LB)</span>
+    </button>
+    <button class="nav-item" data-pane="pane-tracker">
+      <span class="nav-icon">📊</span>
+      <span>Загрузки</span>
+      <span class="nav-badge" id="nav-task-badge">0</span>
+    </button>
+  </nav>
 
   <script>
     const tg = window.Telegram?.WebApp;
     if (tg) tg.expand();
 
     let kpApiKey = localStorage.getItem('vg_kp_key') || '';
+    let lbUsername = localStorage.getItem('vg_lb_user') || '';
+    let watchlist = JSON.parse(localStorage.getItem('vg_watchlist') || '[]');
+    let watched = JSON.parse(localStorage.getItem('vg_watched') || '[]');
+    let taskQueue = JSON.parse(localStorage.getItem('vg_tasks') || '[]');
+    let currentListMode = 'watchlist';
     let selectedMovie = null;
 
     const grid = document.getElementById('movies-grid');
     const statusEl = document.getElementById('status');
     const searchInput = document.getElementById('search-input');
     const modal = document.getElementById('modal');
-    const keyBox = document.getElementById('key-box');
-    const kpKeyInput = document.getElementById('kp-key-input');
 
-    kpKeyInput.value = kpApiKey;
+    document.getElementById('kp-key-input').value = kpApiKey;
+    document.getElementById('lb-user-input').value = lbUsername;
+
+    // Переключение нижних вкладок
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item, .tab-pane').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.pane).classList.add('active');
+        if (btn.dataset.pane === 'pane-lists') renderSavedLists();
+        if (btn.dataset.pane === 'pane-recs') loadRecommendations();
+        if (btn.dataset.pane === 'pane-tracker') renderTasksTracker();
+      });
+    });
 
     document.getElementById('toggle-key-btn').addEventListener('click', () => {
-      keyBox.classList.toggle('open');
+      document.getElementById('key-box').classList.toggle('open');
     });
 
     document.getElementById('save-key-btn').addEventListener('click', () => {
-      kpApiKey = kpKeyInput.value.trim();
+      kpApiKey = document.getElementById('kp-key-input').value.trim();
       localStorage.setItem('vg_kp_key', kpApiKey);
-      keyBox.classList.remove('open');
+      document.getElementById('key-box').classList.remove('open');
       searchMovies(searchInput.value.trim());
     });
 
-    // ДВИЖОК 1: Официальный CORS-friendly поиск через Кинопоиск API Unofficial (если введён ключ)
+    // Автовыбор субтитров при переключении на "Оригинал"
+    document.getElementById('m-voice').addEventListener('change', (e) => {
+      if (e.target.value === 'Оригинал') {
+        document.getElementById('m-subs').value = 'hard';
+      }
+    });
+
+    // === УМНЫЙ ДОГРУЗЧИК ПОСТЕРОВ (Если у фильма вроде "Горбатая гора" или "Назови меня своим именем" нет постера в RU сторе) ===
+    async function resolveMissingPoster(title, year, imgElement) {
+      try {
+        const q = `${title} ${year || ''}`.trim();
+        const res = await fetch(`https://imdb.iamidiotareyoutoo.com/search?q=${encodeURIComponent(q)}`);
+        if (res.ok) {
+          const data = await res.json();
+          const firstWithPoster = (data.description || []).find(item => item['#IMG_POSTER']);
+          if (firstWithPoster && firstWithPoster['#IMG_POSTER']) {
+            imgElement.src = firstWithPoster['#IMG_POSTER'];
+            return firstWithPoster['#IMG_POSTER'];
+          }
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    // ДВИЖОК 1: Кинопоиск API Unofficial (100% русских названий и постеров без цензуры)
     async function searchKinopoiskDirect(query) {
       const url = query
         ? `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}`
         : `https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1`;
 
       const res = await fetch(url, {
-        headers: {
-          'X-API-KEY': kpApiKey,
-          'Content-Type': 'application/json'
-        }
+        headers: { 'X-API-KEY': kpApiKey, 'Content-Type': 'application/json' }
       });
-      if (!res.ok) throw new Error(`KP HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`KP ${res.status}`);
       const data = await res.json();
       const raw = data.films || data.items || [];
 
       return raw.map(f => ({
-        id: f.filmId || f.kinopoiskId,
+        id: String(f.filmId || f.kinopoiskId),
         title: f.nameRu || f.nameEn || f.nameOriginal || 'Фильм',
-        orig_title: f.nameEn || f.nameOriginal || '',
+        orig_title: f.nameEn || f.nameOriginal || f.nameRu || '',
         year: String(f.year || ''),
-        poster: f.posterUrlPreview || f.posterUrl,
+        poster: f.posterUrlPreview || f.posterUrl || '',
         rating: (f.rating && f.rating !== 'null') ? f.rating : (f.ratingKinopoisk || '—'),
         director: (f.genres || []).map(g => g.genre).slice(0, 2).join(', ') || 'Кинопоиск',
-        overview: f.description || 'Нажмите «Отправить на ПК» — сервер автоматически подтянет полное описание и режиссёра.'
+        overview: f.description || 'Полное описание и оценки КП / IMDb / Letterboxd будут автоматически добавлены сервером при выгрузке в ТГК.'
       }));
     }
 
-    // ДВИЖОК 2 (Автоматический без ключей и без прокси!): Apple iTunes Movies RU + IMDb CORS API
-    async function searchOpenCatalogRU(query) {
-      const term = query || 'Дюна';
-      // 1. Пробуем iTunes Russia Movies API (Официальный открытый CORS `Access-Control-Allow-Origin: *`, работает в РФ без VPN)
+    // ДВИЖОК 2: Тройной открытый поиск без ключа (iTunes RU + iTunes US + IMDb Global Posters)
+    async function searchOpenCatalogMulti(query) {
+      const term = query || 'Call Me by Your Name';
+      const combined = [];
+      const seen = new Set();
+
+      // 1. iTunes RU + US параллельно (чтобы находить фильмы, скрытые в российском сторе)
       try {
-        const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=RU&media=movie&entity=movie&limit=24`;
-        const res = await fetch(itunesUrl);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.results && data.results.length > 0) {
-            return data.results.map(item => ({
-              id: item.trackId,
+        const [ruRes, usRes] = await Promise.allSettled([
+          fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=RU&media=movie&entity=movie&limit=18`).then(r => r.json()),
+          fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=US&media=movie&entity=movie&limit=12`).then(r => r.json())
+        ]);
+
+        const list = [
+          ...(ruRes.status === 'fulfilled' ? (ruRes.value.results || []) : []),
+          ...(usRes.status === 'fulfilled' ? (usRes.value.results || []) : [])
+        ];
+
+        list.forEach(item => {
+          const year = item.releaseDate ? item.releaseDate.slice(0, 4) : '';
+          const key = `${item.trackName}_${year}`.toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            combined.push({
+              id: String(item.trackId),
               title: item.trackName,
               orig_title: item.trackCensoredName || item.trackName,
-              year: item.releaseDate ? item.releaseDate.slice(0, 4) : '',
-              // Меняем размер обложки с 100x100 на 600x900 HD
+              year: year,
               poster: (item.artworkUrl100 || '').replace('100x100bb', '600x900bb'),
               rating: item.contentAdvisoryRating || 'HD',
               director: item.artistName ? `Реж: ${item.artistName}` : (item.primaryGenreName || 'Фильм'),
-              overview: item.longDescription || item.shortDescription || 'Описание фильма доступно при скачивании.'
-            }));
+              overview: item.longDescription || item.shortDescription || 'Описание подтянется автоматически при скачивании.'
+            });
           }
+        });
+      } catch (e) {}
+
+      // 2. Дополняем из глобального IMDb API (гарантированно находит "Назови меня своим именем" и "Горбатая гора" с постерами!)
+      try {
+        const imdbRes = await fetch(`https://imdb.iamidiotareyoutoo.com/search?q=${encodeURIComponent(term)}`);
+        if (imdbRes.ok) {
+          const imdbData = await imdbRes.json();
+          (imdbData.description || []).slice(0, 14).forEach(item => {
+            const year = String(item['#YEAR'] || '');
+            const title = item['#TITLE'] || '';
+            const key = `${title}_${year}`.toLowerCase();
+            if (title && !seen.has(key)) {
+              seen.add(key);
+              combined.push({
+                id: item['#IMDB_ID'] || title,
+                title: title,
+                orig_title: title,
+                year: year,
+                poster: item['#IMG_POSTER'] || '',
+                rating: item['#RANK'] ? `IMDb` : 'HD',
+                director: item['#ACTORS'] ? `В ролях: ${item['#ACTORS']}` : 'IMDb Catalog',
+                overview: `Актеры: ${item['#ACTORS'] || '—'}. Русское описание и рейтинги автоматически сформируются вашим ПК при отправке в ТГК.`
+              });
+            }
+          });
         }
       } catch (e) {}
 
-      // 2. Резервный открытый CORS-каталог IMDb (imdb.iamidiotareyoutoo.com — имеет открытый Access-Control-Allow-Origin: *)
-      const imdbUrl = `https://imdb.iamidiotareyoutoo.com/search?q=${encodeURIComponent(term)}`;
-      const res2 = await fetch(imdbUrl);
-      if (!res2.ok) throw new Error(`IMDb HTTP ${res2.status}`);
-      const data2 = await res2.json();
-      return (data2.description || []).map(item => ({
-        id: item['#IMDB_ID'],
-        title: item['#TITLE'],
-        orig_title: item['#TITLE'],
-        year: String(item['#YEAR'] || ''),
-        poster: item['#IMG_POSTER'] || 'https://placehold.co/300x450/1e293b/94a3b8?text=No+Poster',
-        rating: item['#RANK'] ? `#${item['#RANK']}` : 'IMDb',
-        director: item['#ACTORS'] || 'IMDb Catalog',
-        overview: `В ролях: ${item['#ACTORS'] || '—'}. Полное русское описание и оценки будут автоматически загружены вашим ПК при скачивании.`
-      }));
+      return combined;
+    }
+
+    async function fetchMoviesByQuery(query) {
+      if (kpApiKey) {
+        try {
+          const kpList = await searchKinopoiskDirect(query);
+          if (kpList.length > 0) return kpList;
+        } catch (e) {}
+      }
+      return await searchOpenCatalogMulti(query);
     }
 
     async function searchMovies(query) {
       statusEl.style.display = 'block';
-      statusEl.textContent = query ? `Поиск «${query}»...` : 'Загрузка каталога...';
-
+      statusEl.textContent = query ? `Поиск «${query}»...` : 'Загрузка популярных фильмов...';
       try {
-        let movies = [];
-        // Если пользователь сохранил ключ КП — используем Кинопоиск напрямую
-        if (kpApiKey) {
-          try {
-            movies = await searchKinopoiskDirect(query);
-          } catch (kpErr) {
-            movies = await searchOpenCatalogRU(query);
-          }
-        } else {
-          movies = await searchOpenCatalogRU(query);
-        }
-
-        if (!movies || movies.length === 0) {
+        const movies = await fetchMoviesByQuery(query);
+        if (!movies.length) {
           grid.innerHTML = '';
-          statusEl.textContent = 'Ничего не найдено. Попробуйте уточнить название или нажмите «🔑 API КП» вверху и укажите ключ Кинопоиска.';
+          statusEl.textContent = 'Ничего не найдено. Попробуйте написать название иначе.';
         } else {
-          renderMovies(movies);
+          statusEl.style.display = 'none';
+          renderMoviesToGrid(movies, grid);
         }
       } catch (err) {
-        statusEl.textContent = `Ошибка сети (${err.message}). Нажмите «🔑 API КП» вверху и вставьте свой ключ Кинопоиска.`;
+        statusEl.textContent = 'Ошибка соединения.';
       }
     }
 
-    function renderMovies(movies) {
-      grid.innerHTML = '';
-      statusEl.style.display = 'none';
-
+    function renderMoviesToGrid(movies, targetGrid) {
+      targetGrid.innerHTML = '';
       movies.forEach(m => {
         const card = document.createElement('div');
         card.className = 'movie-card';
-        const poster = m.poster || 'https://placehold.co/300x450/1e293b/94a3b8?text=Обложка';
+        const inWatch = watchlist.some(w => w.title === m.title);
+        const inWatched = watched.some(w => w.title === m.title);
+        const badgeHtml = inWatched
+          ? `<span class="saved-badge">👁 Просмотрено</span>`
+          : (inWatch ? `<span class="saved-badge" style="background:#0284c7;">🔖 В списке</span>` : '');
+
+        const fallbackSvg = `https://placehold.co/300x450/131b2e/38bdf8?text=${encodeURIComponent(m.title.slice(0, 18))}`;
 
         card.innerHTML = `
           <div class="poster-wrap">
-            <img src="${poster}" loading="lazy" onerror="this.src='https://placehold.co/300x450/1e293b/94a3b8?text=Фильм'">
-            <span class="rate-badge">★ ${m.rating}</span>
+            ${badgeHtml}
+            <img src="${m.poster || fallbackSvg}" loading="lazy" alt="${m.title}">
+            <span class="rate-badge">★ ${m.rating || 'HD'}</span>
           </div>
           <div class="card-info">
             <span class="card-title">${m.title}</span>
@@ -453,30 +780,238 @@
           </div>
         `;
 
+        const imgEl = card.querySelector('img');
+        // Если постер отсутствует или битый — автоматически догружаем обложку из IMDb CDN
+        if (!m.poster) {
+          resolveMissingPoster(m.orig_title || m.title, m.year, imgEl).then(url => { if (url) m.poster = url; });
+        }
+        imgEl.addEventListener('error', () => {
+          resolveMissingPoster(m.orig_title || m.title, m.year, imgEl).then(url => {
+            if (!url) imgEl.src = fallbackSvg;
+          });
+        }, { once: true });
+
         card.addEventListener('click', () => openMovieDetail(m));
-        grid.appendChild(card);
+        targetGrid.appendChild(card);
       });
     }
 
+    // === СИНХРОНИЗАЦИЯ С ОТКРЫТЫМ ПРОФИЛЕМ LETTERBOXD ===
+    document.getElementById('lb-sync-btn').addEventListener('click', async () => {
+      const user = document.getElementById('lb-user-input').value.trim();
+      if (!user) return;
+      localStorage.setItem('vg_lb_user', user);
+      const label = document.getElementById('lb-status-label');
+      label.textContent = '⏳ Импорт из Letterboxd...';
+      label.style.color = '#38bdf8';
+
+      try {
+        // Читаем публичные RSS-ленты Watchlist и Diary пользователя через открытый CORS RSS2JSON API
+        const watchRss = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(`https://letterboxd.com/${user}/watchlist/rss/`)}`;
+        const diaryRss = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(`https://letterboxd.com/${user}/rss/`)}`;
+
+        const [wRes, dRes] = await Promise.allSettled([
+          fetch(watchRss).then(r => r.json()),
+          fetch(diaryRss).then(r => r.json())
+        ]);
+
+        let addedCount = 0;
+
+        const parseLbItems = (items, targetArray) => {
+          (items || []).forEach(item => {
+            // Заголовок в RSS Letterboxd имеет вид "Call Me by Your Name, 2017 - ★★★★½"
+            const raw = item.title || '';
+            const match = raw.match(/^(.*),\s*(\d{4})(?:\s*-\s*(★+½?))?/);
+            const cleanTitle = match ? match[1].trim() : raw.replace(/\s*-\s*★.*$/, '').trim();
+            const year = match ? match[2] : '';
+            const stars = match && match[3] ? match[3] : 'LB';
+
+            // Вытаскиваем постер прямо из HTML-описания RSS Letterboxd
+            const imgMatch = (item.description || '').match(/<img[^>]+src="([^"]+)"/i);
+            const posterUrl = imgMatch ? imgMatch[1] : '';
+
+            if (cleanTitle && !targetArray.some(x => x.title.toLowerCase() === cleanTitle.toLowerCase())) {
+              targetArray.unshift({
+                id: 'lb_' + Date.now() + Math.random(),
+                title: cleanTitle,
+                orig_title: cleanTitle,
+                year: year,
+                poster: posterUrl,
+                rating: stars,
+                director: `Letterboxd (@${user})`,
+                overview: (item.description || '').replace(/<[^>]+>/g, '').trim() || `Импортировано из профиля Letterboxd @${user}.`
+              });
+              addedCount++;
+            }
+          });
+        };
+
+        if (wRes.status === 'fulfilled' && wRes.value.status === 'ok') {
+          parseLbItems(wRes.value.items, watchlist);
+        }
+        if (dRes.status === 'fulfilled' && dRes.value.status === 'ok') {
+          parseLbItems(dRes.value.items, watched);
+        }
+
+        localStorage.setItem('vg_watchlist', JSON.stringify(watchlist));
+        localStorage.setItem('vg_watched', JSON.stringify(watched));
+        label.textContent = `✓ Импортировано (${addedCount})`;
+        label.style.color = '#22c55e';
+        renderSavedLists();
+      } catch (e) {
+        label.textContent = 'Ошибка чтения профиля';
+        label.style.color = '#ef4444';
+      }
+    });
+
+    function renderSavedLists() {
+      document.getElementById('cnt-watch').textContent = watchlist.length;
+      document.getElementById('cnt-watched').textContent = watched.length;
+      const listGrid = document.getElementById('lists-grid');
+      const emptyEl = document.getElementById('lists-empty');
+      const source = currentListMode === 'watchlist' ? watchlist : watched;
+
+      if (source.length === 0) {
+        listGrid.innerHTML = '';
+        emptyEl.style.display = 'block';
+      } else {
+        emptyEl.style.display = 'none';
+        renderMoviesToGrid(source, listGrid);
+      }
+    }
+
+    document.getElementById('btn-show-watchlist').addEventListener('click', (e) => {
+      currentListMode = 'watchlist';
+      e.target.classList.add('active');
+      document.getElementById('btn-show-watched').classList.remove('active');
+      renderSavedLists();
+    });
+
+    document.getElementById('btn-show-watched').addEventListener('click', (e) => {
+      currentListMode = 'watched';
+      e.target.classList.add('active');
+      document.getElementById('btn-show-watchlist').classList.remove('active');
+      renderSavedLists();
+    });
+
+    // === УМНЫЕ РЕКОМЕНДАЦИИ ===
+    async function loadRecommendations(customQuery = '') {
+      const recGrid = document.getElementById('recs-grid');
+      const recStatus = document.getElementById('recs-status');
+      recStatus.style.display = 'block';
+
+      let seedQuery = customQuery;
+      if (!seedQuery || seedQuery === 'Похожие на твои списки') {
+        const userSeeds = [...watchlist, ...watched];
+        if (userSeeds.length > 0) {
+          const randomFav = userSeeds[Math.floor(Math.random() * userSeeds.length)];
+          seedQuery = randomFav.title.split(' ')[0];
+        } else {
+          seedQuery = 'Call Me by Your Name';
+        }
+      }
+
+      const movies = await fetchMoviesByQuery(seedQuery);
+      recStatus.style.display = 'none';
+      renderMoviesToGrid(movies, recGrid);
+    }
+
+    document.querySelectorAll('#rec-chips .chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('#rec-chips .chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        loadRecommendations(chip.dataset.q);
+      });
+    });
+
+    // === МОДАЛЬНОЕ ОКНО ФИЛЬМА ===
     function openMovieDetail(m) {
       selectedMovie = m;
-      document.getElementById('m-poster').src = m.poster || 'https://placehold.co/300x450/1e293b/94a3b8?text=Фильм';
+      const fallbackSvg = `https://placehold.co/300x450/131b2e/38bdf8?text=${encodeURIComponent(m.title.slice(0, 18))}`;
+      document.getElementById('m-poster').src = m.poster || fallbackSvg;
       document.getElementById('m-title').textContent = `${m.title} ${m.year ? '(' + m.year + ')' : ''}`;
       document.getElementById('m-overview').textContent = m.overview;
       document.getElementById('m-dir').textContent = m.director || 'Фильм';
       document.getElementById('m-rates').textContent = `★ ${m.rating}`;
 
+      updateModalListButtons();
       modal.style.display = 'flex';
     }
+
+    function updateModalListButtons() {
+      if (!selectedMovie) return;
+      const btnWatch = document.getElementById('m-add-watch');
+      const btnWatched = document.getElementById('m-add-watched');
+      const inW = watchlist.some(x => x.title === selectedMovie.title);
+      const inD = watched.some(x => x.title === selectedMovie.title);
+
+      btnWatch.classList.toggle('active', inW);
+      btnWatch.textContent = inW ? '✓ В списке желаемого' : '🔖 Хочу посмотреть';
+      btnWatched.classList.toggle('active', inD);
+      btnWatched.textContent = inD ? '✓ Просмотрено' : '👁 Просмотрено';
+    }
+
+    document.getElementById('m-add-watch').addEventListener('click', () => {
+      if (!selectedMovie) return;
+      const idx = watchlist.findIndex(x => x.title === selectedMovie.title);
+      if (idx >= 0) watchlist.splice(idx, 1);
+      else watchlist.unshift(selectedMovie);
+      localStorage.setItem('vg_watchlist', JSON.stringify(watchlist));
+      updateModalListButtons();
+      renderSavedLists();
+    });
+
+    document.getElementById('m-add-watched').addEventListener('click', () => {
+      if (!selectedMovie) return;
+      const idx = watched.findIndex(x => x.title === selectedMovie.title);
+      if (idx >= 0) watched.splice(idx, 1);
+      else watched.unshift(selectedMovie);
+      localStorage.setItem('vg_watched', JSON.stringify(watched));
+      updateModalListButtons();
+      renderSavedLists();
+    });
 
     document.getElementById('close-modal-btn').addEventListener('click', () => {
       modal.style.display = 'none';
     });
 
-    let debounceTimer;
-    searchInput.addEventListener('input', (e) => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => searchMovies(e.target.value.trim()), 350);
+    // === ТРЕКЕР ЗАКАЧЕК И ОТПРАВКА НА ПК ===
+    function updateBadgeCount() {
+      const badge = document.getElementById('nav-task-badge');
+      if (taskQueue.length > 0) {
+        badge.style.display = 'inline-block';
+        badge.textContent = taskQueue.length;
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function renderTasksTracker() {
+      const container = document.getElementById('tasks-container');
+      updateBadgeCount();
+      if (taskQueue.length === 0) {
+        container.innerHTML = `<div class="status-msg">Нет отправленных задач. Выберите фильм в поиске и нажмите «Скачать в ТГК + прислать в ЛС».</div>`;
+        return;
+      }
+      container.innerHTML = taskQueue.map(t => `
+        <div class="task-card">
+          <img src="${t.poster || 'https://placehold.co/100x150/131b2e/38bdf8?text=Film'}" class="task-poster">
+          <div class="task-info">
+            <div class="task-title">${t.title} (${t.year || 'Фильм'})</div>
+            <div class="task-meta">🎙 ${t.voice} • 📺 ${t.quality}p (${t.format.toUpperCase()}) • 🕒 ${t.time}</div>
+            <div style="font-size:11px; color:var(--accent); font-weight:600; margin-bottom:5px;">
+              📡 Задача передана боту → Живой прогресс-бар идёт в ЛС бота!
+            </div>
+            <div class="task-bar"><div class="task-bar-fill"></div></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('clear-tasks-btn').addEventListener('click', () => {
+      taskQueue = [];
+      localStorage.setItem('vg_tasks', '[]');
+      renderTasksTracker();
     });
 
     document.getElementById('send-task-btn').addEventListener('click', () => {
@@ -490,20 +1025,35 @@
         year: selectedMovie.year || '',
         overview: selectedMovie.overview || '',
         rating: selectedMovie.rating || '—',
+        poster: selectedMovie.poster || '',
+        voice: document.getElementById('m-voice').value,
         quality: document.getElementById('m-quality').value,
         format: document.getElementById('m-format').value,
-        subs: document.getElementById('m-subs').value
+        subs: document.getElementById('m-subs').value,
+        time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
       };
+
+      taskQueue.unshift(payload);
+      localStorage.setItem('vg_tasks', JSON.stringify(taskQueue.slice(0, 25)));
+      updateBadgeCount();
 
       if (tg && tg.sendData) {
         tg.sendData(JSON.stringify(payload));
         tg.close();
       } else {
-        alert(`Отправка задачи доступна при открытии через кнопку внутри Telegram!\nВыбран: ${payload.title} (${payload.year})`);
+        modal.style.display = 'none';
+        document.querySelector('[data-pane="pane-tracker"]').click();
       }
     });
 
-    // Запускаем стартовый каталог
+    let debounceTimer;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => searchMovies(e.target.value.trim()), 350);
+    });
+
+    updateBadgeCount();
+    renderSavedLists();
     searchMovies('');
   </script>
 </body>

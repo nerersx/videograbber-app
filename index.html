@@ -200,10 +200,10 @@
     <input type="text" id="search-input" placeholder="Введите название фильма...">
   </div>
 
-  <div id="status" class="status-msg">Загрузка популярных фильмов...</div>
+  <div id="status" class="status-msg">Загрузка каталога...</div>
   <div class="grid" id="movies-grid"></div>
 
-  <!-- Модалка скачивания -->
+  <!-- Модалка -->
   <div class="modal-overlay" id="modal">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -258,21 +258,43 @@
     const searchInput = document.getElementById('search-input');
     const modal = document.getElementById('modal');
 
-    // Функция поиска по базе балансера
+    // Обход CORS через AllOrigins с автоматическим парсингом ответа
+    async function fetchKodikSafe(endpoint) {
+      const rawTargetUrl = `https://kodikapi.com/${endpoint}`;
+      
+      // 1. Пробуем через api.allorigins.win (гарантированно возвращает чистый JSON без блокировок)
+      try {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawTargetUrl)}`;
+        const res = await fetch(proxyUrl);
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch(e) {}
+
+      // 2. Резервный шлюз (на случай сетевого тайм-аута первого)
+      try {
+        const fallbackUrl = `https://corsproxy.io/?url=${encodeURIComponent(rawTargetUrl)}`;
+        const res2 = await fetch(fallbackUrl);
+        if (res2.ok) {
+          return await res2.json();
+        }
+      } catch(e) {}
+
+      throw new Error("CORS_BLOCKED");
+    }
+
     async function searchMovies(query) {
       statusEl.style.display = 'block';
-      statusEl.textContent = query ? `Поиск «${query}»...` : 'Загрузка подборки...';
+      statusEl.textContent = query ? `Поиск «${query}»...` : 'Загрузка новинок...';
 
-      const url = query
-        ? `https://kodikapi.com/search?token=${KODIK_TOKEN}&title=${encodeURIComponent(query)}&with_material_data=true&limit=30`
-        : `https://kodikapi.com/list?token=${KODIK_TOKEN}&types=movie&sort=year&order=desc&with_material_data=true&limit=30`;
+      const endpoint = query
+        ? `search?token=${KODIK_TOKEN}&title=${encodeURIComponent(query)}&with_material_data=true&limit=30`
+        : `list?token=${KODIK_TOKEN}&types=movie&sort=year&order=desc&with_material_data=true&limit=30`;
 
       try {
-        const res = await fetch(url);
-        const data = await res.json();
+        const data = await fetchKodikSafe(endpoint);
         const rawResults = data.results || [];
 
-        // Убираем дубликаты одного и того же фильма с разными озвучками
         const unique = [];
         const seen = new Set();
         rawResults.forEach(item => {
@@ -285,12 +307,12 @@
 
         if (unique.length === 0) {
           grid.innerHTML = '';
-          statusEl.textContent = 'Ничего не найдено. Проверьте правильность названия.';
+          statusEl.textContent = 'Ничего не найдено. Попробуйте ввести другое название.';
         } else {
           renderMovies(unique);
         }
       } catch (err) {
-        statusEl.textContent = 'Ошибка сети. Проверьте соединение.';
+        statusEl.textContent = 'Ошибка загрузки данных. Повторите запрос.';
       }
     }
 
@@ -302,14 +324,14 @@
         const mat = m.material_data || {};
         const title = m.title || m.title_orig || 'Без названия';
         const year = m.year || mat.year || '';
-        const poster = mat.poster_url || 'https://via.placeholder.com/300x450/1e293b/94a3b8?text=Нет+постера';
+        const poster = mat.poster_url || 'https://placehold.co/300x450/1e293b/94a3b8?text=Нет+постера';
         const rate = mat.kinopoisk_rating || mat.imdb_rating || '—';
 
         const card = document.createElement('div');
         card.className = 'movie-card';
         card.innerHTML = `
           <div class="poster-wrap">
-            <img src="${poster}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x450/1e293b/94a3b8?text=Обложка'">
+            <img src="${poster}" loading="lazy" onerror="this.src='https://placehold.co/300x450/1e293b/94a3b8?text=Обложка'">
             <span class="rate-badge">★ ${rate}</span>
           </div>
           <div class="card-info">
@@ -326,7 +348,7 @@
     function openMovieDetail(m) {
       selectedMovie = m;
       const mat = m.material_data || {};
-      const poster = mat.poster_url || 'https://via.placeholder.com/300x450/1e293b/94a3b8?text=Обложка';
+      const poster = mat.poster_url || 'https://placehold.co/300x450/1e293b/94a3b8?text=Обложка';
       const year = m.year || mat.year || '';
       const title = m.title || m.title_orig || 'Фильм';
 
@@ -349,10 +371,9 @@
     let debounceTimer;
     searchInput.addEventListener('input', (e) => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => searchMovies(e.target.value.trim()), 350);
+      debounceTimer = setTimeout(() => searchMovies(e.target.value.trim()), 400);
     });
 
-    // Отправка задания в бот
     document.getElementById('send-task-btn').addEventListener('click', () => {
       if (!selectedMovie || !tg) return;
 
@@ -374,7 +395,6 @@
       tg.close();
     });
 
-    // Стартовая подборка
     searchMovies('');
   </script>
 </body>

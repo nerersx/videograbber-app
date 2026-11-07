@@ -3,277 +3,548 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CleanYourTV OS v5.0</title>
+  <title>CleanYourTV OS × FLEX v6.0</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     :root {
-      --bg: #070b14; --glass: rgba(19, 27, 46, 0.8); --glass-hi: rgba(15, 23, 42, 0.95);
-      --card: #11192c; --accent: #00d2ff; --glow: rgba(0, 210, 255, 0.55);
-      --green: #22c55e; --danger: #ef4444; --text: #f8fafc; --muted: #94a3b8;
-      --border: rgba(255, 255, 255, 0.1); --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --bg: #05050a;
+      --surface: #0e101a;
+      --surface-hi: #151928;
+      --glass: rgba(16, 19, 32, 0.78);
+      --accent: #7c3aed;
+      --accent-neon: #a855f7;
+      --cyan: #00d2ff;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.09);
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Roboto, sans-serif;
-      background: radial-gradient(circle at 50% 0%, #13203d 0%, var(--bg) 70%);
-      color: var(--text); padding: 12px 14px 100px; min-height: 100vh; overflow-x: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(124, 58, 237, 0.22) 0%, transparent 45%),
+        radial-gradient(circle at 85% 8%, rgba(0, 210, 255, 0.16) 0%, transparent 45%),
+        var(--bg);
+      color: var(--text);
+      padding: 16px 18px 105px;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    .topbar, .drawer, .main { max-width: 1160px; margin: 0 auto 16px; }
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border);
-      padding: 10px 14px; border-radius: 16px;
-    }
-    .logo { background: linear-gradient(135deg, #00d2ff, #2563eb); font-weight: 900; font-size: 12px; padding: 5px 10px; border-radius: 9px; }
-    .pill {
-      background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);
-      font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 11px; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 6px; transition: transform 0.2s var(--spring);
-    }
-    .pill:hover { transform: scale(1.05); border-color: var(--accent); }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block; }
-    .dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
 
-    .drawer { display: none; background: var(--glass-hi); border: 1px solid var(--border); padding: 14px; border-radius: 16px; gap: 10px; flex-direction: column; }
+    .container { max-width: 1260px; margin: 0 auto; }
+
+    /* === 1. ШАПКА В СТИЛЕ CLEANYOURTV DASHBOARD === */
+    .tv-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 14px; margin-bottom: 22px;
+      padding: 14px 20px; border-radius: 22px;
+      background: var(--glass); backdrop-filter: blur(24px); border: 1px solid var(--border);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.45);
+    }
+    .tv-time-block { display: flex; flex-direction: column; gap: 2px; }
+    .tv-greeting { font-size: 11px; font-weight: 800; letter-spacing: 1.6px; color: var(--accent-neon); text-transform: uppercase; }
+    .tv-clock-row { display: flex; align-items: baseline; gap: 12px; }
+    .tv-clock { font-size: 28px; font-weight: 300; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+    .tv-date { font-size: 11.5px; font-weight: 700; letter-spacing: 1.2px; color: var(--muted); text-transform: uppercase; border-left: 1px solid var(--border); padding-left: 12px; }
+
+    .tv-pills { display: flex; align-items: center; gap: 9px; }
+    .tv-pill {
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);
+      font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 99px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px; transition: all 0.22s var(--spring);
+    }
+    .tv-pill:hover { transform: scale(1.05); border-color: var(--accent-neon); background: rgba(124, 58, 237, 0.18); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+    .dot.online { background: var(--green); box-shadow: 0 0 10px var(--green); }
+
+    .drawer {
+      display: none; background: var(--surface-hi); border: 1px solid var(--border);
+      padding: 16px; border-radius: 20px; margin-bottom: 20px; gap: 10px; flex-direction: column;
+    }
     .drawer.open { display: flex; }
-    .drawer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+    .drawer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
     input, select {
       width: 100%; background: rgba(0,0,0,0.45); border: 1px solid var(--border);
-      color: var(--text); padding: 10px 12px; border-radius: 11px; font-size: 13px; outline: none;
+      color: var(--text); padding: 10px 14px; border-radius: 12px; font-size: 13px; outline: none;
     }
-    input:focus { border-color: var(--accent); }
+    input:focus, select:focus { border-color: var(--accent-neon); }
 
     .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .tab-pane.active { display: block; animation: fadeIn 0.28s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .sec-head { display: flex; align-items: baseline; justify-content: space-between; margin: 22px 0 14px; }
+    .sec-head h2 { font-size: 24px; font-weight: 900; letter-spacing: -0.4px; }
+    .sec-link { font-size: 13px; font-weight: 700; color: var(--accent-neon); cursor: pointer; }
+
+    /* === 2. МИРОВЫЕ ПРЕМЬЕРЫ (КАРУСЕЛЬ БАННЕРОВ В СТИЛЕ FLEX) === */
+    .hero-rail {
+      display: flex; gap: 16px; overflow-x: auto; padding: 4px 2px 14px;
+      scrollbar-width: none; scroll-snap-type: x mandatory;
+    }
+    .hero-rail::-webkit-scrollbar { display: none; }
+    .hero-card {
+      min-width: 320px; width: 390px; aspect-ratio: 16 / 9.5; flex-shrink: 0;
+      scroll-snap-align: start; border-radius: 20px; overflow: hidden; position: relative;
+      background: var(--surface); border: 1px solid var(--border); cursor: pointer;
+      transition: transform 0.28s var(--spring), border-color 0.25s, box-shadow 0.28s;
+    }
+    @media (min-width: 768px) { .hero-card { width: 430px; } }
+    .hero-card:hover {
+      transform: translateY(-4px) scale(1.02); border-color: var(--accent-neon);
+      box-shadow: 0 16px 38px rgba(124, 58, 237, 0.3);
+    }
+    .hero-bg { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.68); transition: transform 0.4s; }
+    .hero-card:hover .hero-bg { transform: scale(1.05); }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(5,5,10,0.1) 0%, rgba(5,5,10,0.92) 92%);
+      padding: 16px; display: flex; flex-direction: column; justify-content: flex-end; gap: 7px;
+    }
+    .hero-title { font-size: 19px; font-weight: 900; line-height: 1.15; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+    .hero-desc { font-size: 12px; color: #cbd5e1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .hero-meta { display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 700; flex-wrap: wrap; }
+    .kp-pill { background: var(--accent); color: #fff; padding: 2px 7px; border-radius: 6px; font-weight: 900; }
+    .hero-btns { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-purple {
+      background: var(--accent); color: #fff; border: none; padding: 7px 14px;
+      border-radius: 99px; font-size: 12px; font-weight: 800; cursor: pointer;
+      transition: background 0.2s, transform 0.2s var(--spring);
+    }
+    .btn-purple:hover { background: var(--accent-neon); transform: scale(1.04); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff;
+      padding: 7px 13px; border-radius: 99px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+
+    /* === 3. ПАНЕЛЬ "ЧТО ХОТИТЕ ПОСМОТРЕТЬ?" + СЧЕТЧИКИ КАТЕГОРИЙ (FLEX КАТАЛОГ) === */
+    .filter-panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 22px; padding: 20px; margin: 18px 0;
+    }
+    .filter-title { font-size: 20px; font-weight: 900; margin-bottom: 12px; }
+    .search-line {
+      position: relative; margin-bottom: 14px;
+    }
+    .search-line input {
+      background: transparent; border: none; border-bottom: 1.5px solid rgba(168, 85, 247, 0.45);
+      border-radius: 0; padding: 10px 4px; font-size: 15px; font-weight: 600;
+    }
+    .search-line input:focus { border-bottom-color: var(--cyan); }
+    .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .f-chip {
+      background: var(--surface-hi); border: 1px solid var(--border); color: var(--text);
+      padding: 7px 13px; border-radius: 99px; font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s var(--spring);
+    }
+    .f-chip:hover, .f-chip.active { background: var(--accent); border-color: var(--accent-neon); color: #fff; transform: translateY(-2px); }
+
+    .stats-row {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 18px 0 24px;
+    }
+    @media (min-width: 720px) { .stats-row { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
+    .stat-box {
+      background: linear-gradient(145deg, #111322, #191233);
+      border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 18px;
+      padding: 16px; text-align: center; cursor: pointer;
+      transition: transform 0.24s var(--spring), border-color 0.2s;
+    }
+    .stat-box:hover, .stat-box.active { transform: translateY(-4px); border-color: var(--accent-neon); box-shadow: 0 10px 26px rgba(124, 58, 237, 0.28); }
+    .stat-label { font-size: 13px; font-weight: 800; color: #e2e8f0; margin-bottom: 6px; }
+    .stat-num { font-size: 30px; font-weight: 900; color: var(--accent-neon); letter-spacing: -0.5px; }
+
+    /* === 4. СЕТКА ПОСТЕРОВ === */
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
     @media (min-width: 640px) { .grid { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
     @media (min-width: 980px) { .grid { grid-template-columns: repeat(5, 1fr); gap: 18px; } }
-
     .card {
-      background: var(--card); border-radius: 15px; overflow: hidden; border: 2px solid transparent;
+      background: var(--surface); border-radius: 16px; overflow: hidden; border: 2px solid transparent;
       display: flex; flex-direction: column; cursor: pointer; position: relative;
       transition: transform 0.26s var(--spring), border-color 0.2s, box-shadow 0.26s;
     }
     .card:hover, .card.tv-focus {
-      transform: translateY(-5px) scale(1.04); border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--glow), 0 14px 28px rgba(0,0,0,0.6); z-index: 4;
+      transform: translateY(-6px) scale(1.035); border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.35), 0 16px 32px rgba(0,0,0,0.65); z-index: 4;
     }
-    .poster { width: 100%; aspect-ratio: 2/3; background: #162038; position: relative; }
+    .poster { width: 100%; aspect-ratio: 2/3; background: #16192b; position: relative; overflow: hidden; }
     .poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .badge { position: absolute; top: 7px; right: 7px; background: rgba(7,11,20,0.85); color: #fbbf24; font-weight: 800; font-size: 11px; padding: 2px 7px; border-radius: 7px; }
-    .c-info { padding: 9px 11px; }
-    .c-title { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .c-meta { font-size: 11px; color: var(--muted); }
+    .badge-top { position: absolute; top: 8px; right: 8px; background: rgba(5,5,10,0.85); color: #fbbf24; font-weight: 800; font-size: 11px; padding: 3px 7px; border-radius: 7px; }
+    .badge-left { position: absolute; top: 8px; left: 8px; background: var(--accent); color: #fff; font-weight: 800; font-size: 10px; padding: 3px 8px; border-radius: 99px; }
+    .c-info { padding: 10px 12px; }
+    .c-title { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .c-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 
-    .shelf-row { display: flex; gap: 12px; overflow-x: auto; padding: 6px 2px 12px; scrollbar-width: none; }
-    .shelf-row::-webkit-scrollbar { display: none; }
-    .shelf-row .card { min-width: 145px; max-width: 145px; flex-shrink: 0; }
-
-    /* Парящий Dock */
-    .dock-wrap { position: fixed; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; z-index: 90; pointer-events: none; }
-    .dock {
-      pointer-events: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(24px);
-      border: 1px solid rgba(255,255,255,0.14); padding: 7px 12px; border-radius: 22px; display: flex; gap: 8px;
-      box-shadow: 0 14px 36px rgba(0,0,0,0.65);
+    /* === 5. ВИТРИНА "ПОДБОРКИ" В СТИЛЕ FLEX === */
+    .collections-grid {
+      display: grid; grid-template-columns: 1fr; gap: 18px; margin-top: 16px;
     }
-    .dock-btn {
-      background: transparent; border: none; color: var(--muted); padding: 7px 14px; border-radius: 14px;
-      font-size: 11px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px;
-      cursor: pointer; transition: transform 0.24s var(--spring), color 0.2s, background 0.2s;
+    @media (min-width: 768px) { .collections-grid { grid-template-columns: repeat(3, 1fr); } }
+    .col-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 22px;
+      overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;
+      transition: transform 0.26s var(--spring), border-color 0.2s; cursor: pointer;
     }
-    .dock-btn:hover { transform: translateY(-5px) scale(1.12); color: var(--text); }
-    .dock-btn.active { color: var(--accent); background: rgba(0, 210, 255, 0.14); }
+    .col-card:hover { transform: translateY(-5px); border-color: var(--accent-neon); }
+    .col-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+    .col-body { padding: 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: space-between; }
+    .col-title { font-size: 19px; font-weight: 900; }
+    .col-desc { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+    .col-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+    .col-count { font-size: 34px; font-weight: 900; color: #fff; }
 
-    /* Шторка карточки */
+    /* === 6. МОДАЛКА С ДВУХКОЛОНОЧНЫМ ПЛЕЕРОМ И ПРОВЕРКОЙ РАБОТОСПОСОБНОСТИ === */
     .overlay {
-      position: fixed; inset: 0; background: rgba(4, 7, 15, 0.82); backdrop-filter: blur(10px);
+      position: fixed; inset: 0; background: rgba(4, 6, 12, 0.86); backdrop-filter: blur(14px);
       display: none; align-items: flex-end; justify-content: center; z-index: 120;
     }
-    @media (min-width: 768px) { .overlay { align-items: center; padding: 18px; } }
+    @media (min-width: 820px) { .overlay { align-items: center; padding: 20px; } }
     .sheet {
-      width: 100%; max-width: 700px; background: var(--glass-hi); border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 24px 24px 0 0; padding: 10px 16px 20px; max-height: 82vh; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 10px; position: relative;
-      transition: transform 0.3s, max-height 0.3s;
+      width: 100%; max-width: 1080px; background: var(--surface-hi); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 24px 24px 0 0; padding: 12px 18px 22px; max-height: 88vh; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 12px; position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.85); transition: transform 0.3s, max-height 0.3s;
     }
-    .sheet.fullscreen { max-height: 98vh; height: 98vh; }
-    @media (min-width: 768px) { .sheet { border-radius: 24px; max-height: 90vh; padding: 18px 22px; } }
+    .sheet.fullscreen { max-height: 98vh; height: 98vh; max-width: 98vw; }
+    @media (min-width: 820px) { .sheet { border-radius: 26px; padding: 20px 24px; } }
+
     .drag-bar { padding: 4px 0 6px; cursor: grab; touch-action: none; }
-    .drag-pill { width: 42px; height: 5px; background: rgba(255,255,255,0.25); border-radius: 8px; margin: 0 auto; }
-    .top-acts { position: absolute; top: 12px; right: 14px; display: flex; gap: 7px; z-index: 10; }
+    .drag-pill { width: 44px; height: 5px; background: rgba(255,255,255,0.25); border-radius: 8px; margin: 0 auto; }
+    .top-acts { position: absolute; top: 14px; right: 18px; display: flex; gap: 8px; z-index: 10; }
     .icon-btn {
-      width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1);
+      width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.1);
       border: 1px solid var(--border); color: var(--text); font-weight: 800; cursor: pointer;
     }
 
-    .mode-switch { display: flex; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 12px; padding: 3px; gap: 4px; }
-    .mode-btn { flex: 1; background: transparent; border: none; color: var(--muted); padding: 8px; border-radius: 9px; font-size: 12px; font-weight: 800; cursor: pointer; }
-    .mode-btn.active { background: rgba(0, 210, 255, 0.16); color: var(--accent); border: 1px solid rgba(0, 210, 255, 0.35); }
+    .mode-switch { display: flex; background: rgba(0,0,0,0.45); border: 1px solid var(--border); border-radius: 14px; padding: 4px; gap: 6px; }
+    .mode-btn { flex: 1; background: transparent; border: none; color: var(--muted); padding: 9px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; }
+    .mode-btn.active { background: var(--accent); color: #fff; box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4); }
 
-    .player-wrap { display: none; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
-    .player-wrap.active { display: block; }
-    .player-wrap iframe, .player-wrap video { width: 100%; height: 100%; border: none; display: block; }
-
-    .ctrl-bar { display: flex; gap: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); padding: 7px; border-radius: 13px; }
-    .ctrl-btn {
-      flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);
-      padding: 8px 10px; border-radius: 9px; font-size: 12px; font-weight: 700; display: flex; justify-content: space-between; cursor: pointer;
+    /* ДВУХКОЛОНОЧНЫЙ WORKSPACE: ПЛЕЕР СЛЕВА + ОЗВУЧКИ И ПЛЕЕРЫ СПРАВА */
+    .watch-workspace {
+      display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start;
     }
-    .ctrl-btn b { color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
-
-    .popover { display: none; flex-direction: column; gap: 4px; background: #0e1628; border: 1px solid var(--accent); border-radius: 12px; padding: 8px; max-height: 190px; overflow-y: auto; }
-    .popover.open { display: flex; }
-    .pop-opt {
-      background: rgba(255,255,255,0.04); border: 1px solid transparent; color: var(--text);
-      padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; cursor: pointer;
+    @media (min-width: 820px) {
+      .watch-workspace { grid-template-columns: 1.65fr 1fr; }
     }
-    .pop-opt.selected { background: rgba(0, 210, 255, 0.15); border-color: var(--accent); color: var(--accent); }
 
-    .serial-box { display: none; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); padding: 10px; border-radius: 12px; }
+    .player-stage {
+      display: none; width: 100%; aspect-ratio: 16 / 9; background: #000;
+      border-radius: 16px; overflow: hidden; border: 1px solid var(--border); position: relative;
+    }
+    .player-stage.active { display: block; }
+    .player-stage iframe, .player-stage video {
+      width: 100%; height: 100%; border: none; display: block; overflow: hidden;
+    }
+
+    /* Кастомные контролы поверх нашего собственного плеера */
+    .custom-ui-bar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.9));
+      padding: 10px 12px; display: none; flex-direction: column; gap: 6px; z-index: 5;
+    }
+    .custom-ui-bar.active { display: flex; }
+    .c-seek { width: 100%; accent-color: var(--cyan); cursor: pointer; height: 4px; }
+    .c-btns { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 700; }
+
+    /* ПРАВАЯ КОЛОНКА ВЫБОРА ОЗВУЧКИ И ПЛЕЕРА СО СТАТУСАМИ 🟢/🟡/🔴 */
+    .right-sidebar {
+      display: flex; flex-direction: column; gap: 10px;
+      background: rgba(0,0,0,0.38); border: 1px solid var(--border);
+      border-radius: 16px; padding: 12px; max-height: 410px; overflow-y: auto;
+    }
+    .side-label {
+      font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.6px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .voice-list, .player-list { display: flex; flex-direction: column; gap: 6px; }
+    .side-item {
+      background: rgba(255,255,255,0.05); border: 1px solid transparent; color: var(--text);
+      padding: 9px 11px; border-radius: 11px; font-size: 12.5px; font-weight: 700;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      cursor: pointer; transition: all 0.18s; text-align: left;
+    }
+    .side-item:hover { background: rgba(255,255,255,0.1); }
+    .side-item.active {
+      background: rgba(0, 210, 255, 0.14); border-color: var(--cyan); color: var(--cyan);
+    }
+    .status-tag {
+      font-size: 10.5px; font-weight: 800; padding: 2px 7px; border-radius: 6px;
+      white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .st-ok { background: rgba(34, 197, 94, 0.18); color: #4ade80; border: 1px solid rgba(34,197,94,0.35); }
+    .st-warn { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+    .st-err { background: rgba(239, 68, 68, 0.18); color: #f87171; opacity: 0.75; }
+
+    .serial-box { display: none; flex-direction: column; gap: 8px; margin-top: 4px; border-top: 1px solid var(--border); padding-top: 10px; }
     .serial-box.active { display: flex; }
-    .ep-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; max-height: 105px; overflow-y: auto; }
-    .chip { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text); padding: 6px; border-radius: 7px; font-size: 11px; font-weight: 700; text-align: center; cursor: pointer; white-space: nowrap; }
-    .chip.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 800; }
+    .ep-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; max-height: 95px; overflow-y: auto; }
+    .chip { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text); padding: 6px; border-radius: 8px; font-size: 11px; font-weight: 700; text-align: center; cursor: pointer; white-space: nowrap; }
+    .chip.active { background: var(--cyan); color: #000; border-color: var(--cyan); font-weight: 900; }
 
-    .act-btn { background: linear-gradient(135deg, #00d2ff, #0284c7); color: #000; font-weight: 900; font-size: 14px; border: none; border-radius: 12px; padding: 13px; cursor: pointer; }
-    .task-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 11px; margin-bottom: 8px; }
+    .act-btn {
+      background: linear-gradient(135deg, var(--accent), #2563eb); color: #fff;
+      font-weight: 900; font-size: 14px; border: none; border-radius: 14px; padding: 14px;
+      cursor: pointer; transition: transform 0.2s var(--spring);
+    }
+    .act-btn:hover { transform: translateY(-2px); }
+
+    /* Парящий Dock */
+    .dock-wrap { position: fixed; bottom: 14px; left: 0; right: 0; display: flex; justify-content: center; z-index: 90; pointer-events: none; }
+    .dock {
+      pointer-events: auto; background: rgba(14, 16, 26, 0.88); backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.14); padding: 7px 14px; border-radius: 24px; display: flex; gap: 8px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.75);
+    }
+    .dock-btn {
+      background: transparent; border: none; color: var(--muted); padding: 8px 15px; border-radius: 16px;
+      font-size: 11px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      cursor: pointer; transition: transform 0.24s var(--spring), color 0.2s, background 0.2s;
+    }
+    .dock-btn:hover { transform: translateY(-5px) scale(1.1); color: var(--text); }
+    .dock-btn.active { color: #fff; background: var(--accent); }
+
+    .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin-bottom: 8px; }
     .bar { width: 100%; height: 6px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; margin-top: 6px; }
-    .bar > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); transition: width 0.3s; }
+    .bar > div { height: 100%; background: linear-gradient(90deg, var(--cyan), var(--green)); transition: width 0.3s; }
     .msg { text-align: center; font-size: 13px; color: var(--muted); padding: 26px 10px; }
   </style>
 </head>
 <body>
 
-  <header class="topbar">
-    <div style="display:flex; align-items:center; gap:9px;">
-      <span class="logo">CleanYourTV</span><b style="font-size:13px;">OS 5.0</b>
-      <span class="dot" id="srv-dot"></span>
-    </div>
-    <div style="display:flex; align-items:center; gap:8px;">
-      <button class="pill" id="sfx-btn">🔊</button>
-      <button class="pill" id="cfg-btn">⚙️ Система</button>
-      <b id="clock" style="font-size:12.5px;">00:00</b>
-    </div>
-  </header>
+  <div class="container">
+    <!-- 1. ВЕРХНИЙ ДАШБОРД CLEANYOURTV -->
+    <header class="tv-header">
+      <div class="tv-time-block">
+        <span class="tv-greeting" id="tv-greeting">GOOD EVENING • CLEANYOURTV OS</span>
+        <div class="tv-clock-row">
+          <span class="tv-clock" id="clock">00:00</span>
+          <span class="tv-date" id="tv-date">ВОСКРЕСЕНЬЕ, 8 НОЯБРЯ</span>
+        </div>
+      </div>
+      <div class="tv-pills">
+        <button class="tv-pill" id="ping- pill"><span class="dot" id="srv-dot"></span><span id="srv-lbl">Облако ТГ</span></button>
+        <button class="tv-pill" id="sfx-btn">🔊 Звук</button>
+        <button class="tv-pill" id="cfg-btn">⚙️ Настройки</button>
+      </div>
+    </header>
 
-  <div class="drawer" id="drawer">
-    <div class="drawer-grid">
-      <input id="in-srv" placeholder="Сервер (http://127.0.0.1:8765)">
-      <input id="in-uid" placeholder="Твой Telegram ID">
-      <input id="in-kp" placeholder="API-ключ Кинопоиска">
+    <div class="drawer" id="drawer">
+      <div class="drawer-grid">
+        <input id="in-srv" placeholder="Сервер ПК (http://127.0.0.1:8765 или туннель)">
+        <input id="in-uid" placeholder="Твой Telegram ID (для ЛС)">
+        <input id="in-kp" placeholder="API-ключ Кинопоиска">
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:11.5px; color:var(--muted);">🎮 Поддержка геймпада и стрелок ⬅️⬆️⬇️➡️ + Enter / Esc</span>
+        <button class="tv-pill" id="save-cfg" style="background:var(--accent);">✓ Сохранить</button>
+      </div>
     </div>
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:11px; color:var(--muted);">🎮 Управление на ПК: стрелки ⬅️⬆️⬇️➡️, Enter, Esc</span>
-      <button class="pill" id="save-cfg" style="background:var(--accent); color:#000;">✓ Сохранить</button>
-    </div>
-  </div>
 
-  <main class="main">
+    <!-- ВКЛАДКА 1: ГЛАВНАЯ И КАТАЛОГ FLEX -->
     <div class="tab-pane active" id="pane-search">
-      <input id="search-in" placeholder="🔍 Поиск фильмов, сериалов и аниме..." style="margin-bottom:14px;">
-      <div id="status" class="msg">Загрузка витрины...</div>
+      <div class="sec-head" style="margin-top:4px;">
+        <h2>Мировые премьеры</h2>
+        <span class="sec-link" onclick="filterByPreset('PREMIERE')">Смотреть все ›</span>
+      </div>
+      <div class="hero-rail" id="hero-rail"></div>
+
+      <!-- Блок фильтров в стиле FLEX -->
+      <div class="filter-panel">
+        <div class="filter-title">Что хотите посмотреть?</div>
+        <div class="search-line">
+          <input id="search-in" placeholder="🔍 Название фильма, сериала или франшизы...">
+        </div>
+        <div class="filter-chips" id="quick-filters">
+          <button class="f-chip active" data-q="">Все новинки</button>
+          <button class="f-chip" data-q="4K">🔥 4K / 1080p</button>
+          <button class="f-chip" data-q="2026">Премьеры 2026</button>
+          <button class="f-chip" data-q="Фантастика">Фантастика</button>
+          <button class="f-chip" data-q="Триллеры">Триллеры</button>
+          <button class="f-chip" data-q="Комедия">Комедии</button>
+          <button class="f-chip" data-q="Драма">Драмы</button>
+          <button class="f-chip" data-q="Аниме">Аниме</button>
+        </div>
+      </div>
+
+      <!-- 4 крупные карточки счетчиков категорий -->
+      <div class="stats-row">
+        <div class="stat-box active" onclick="filterByType('FILM', this)">
+          <div class="stat-label">Фильмы</div>
+          <div class="stat-num">3 252</div>
+        </div>
+        <div class="stat-box" onclick="filterByType('TV_SERIES', this)">
+          <div class="stat-label">Сериалы</div>
+          <div class="stat-num">2 089</div>
+        </div>
+        <div class="stat-box" onclick="filterByType('MULT', this)">
+          <div class="stat-label">Мультфильмы</div>
+          <div class="stat-num">401</div>
+        </div>
+        <div class="stat-box" onclick="filterByType('ANIME', this)">
+          <div class="stat-label">Аниме и спец</div>
+          <div class="stat-num">284</div>
+        </div>
+      </div>
+
+      <div class="sec-head">
+        <h2 id="catalog-heading">Новинки фильмов и сериалов</h2>
+      </div>
+      <div id="status" class="msg">Загрузка каталога...</div>
       <div class="grid" id="grid-search"></div>
     </div>
 
+    <!-- ВКЛАДКА 2: ПОДБОРКИ И УМНЫЕ РЕКОМЕНДАЦИИ (В СТИЛЕ FLEX) -->
     <div class="tab-pane" id="pane-recs">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <span style="font-size:12px; color:var(--muted);" id="taste-lbl">Персональные полки</span>
-        <button class="pill" id="reset-taste">Сбросить вкус</button>
+      <div class="sec-head" style="margin-top:4px;">
+        <h2>Подборки и персональные полки</h2>
+        <button class="tv-pill" id="reset-taste">Сбросить вкус</button>
       </div>
-      <div id="shelves"></div>
+
+      <div class="filter-chips" id="col-tags" style="margin-bottom:18px;">
+        <button class="f-chip active" data-q="Крупные франшизы">Крупные франшизы</button>
+        <button class="f-chip" data-q="Мрачное будущее">Мрачное будущее</button>
+        <button class="f-chip" data-q="Испугаться">Самые жуткие новинки</button>
+        <button class="f-chip" data-q="Криминал">Гангстеры и мафия</button>
+        <button class="f-chip" data-q="Премии и фестивали">Премии и фестивали</button>
+        <button class="f-chip" data-q="Экранизации">Экранизации</button>
+      </div>
+
+      <!-- Карточки тематических коллекций FLEX -->
+      <div class="collections-grid" id="flex-collections"></div>
+
+      <div id="shelves" style="margin-top:26px;"></div>
     </div>
 
+    <!-- ВКЛАДКА 3: ИЗБРАННОЕ И СПИСКИ -->
     <div class="tab-pane" id="pane-lists">
-      <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button class="pill" id="tab-watch">🔖 Хочу посмотреть (<span id="cnt-w">0</span>)</button>
-        <button class="pill" id="tab-watched">👁 Просмотрено (<span id="cnt-d">0</span>)</button>
+      <div class="sec-head"><h2>Избранное и списки</h2></div>
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <button class="tv-pill" id="tab-watch">🔖 Хочу посмотреть (<span id="cnt-w">0</span>)</button>
+        <button class="tv-pill" id="tab-watched">👁 Просмотрено (<span id="cnt-d">0</span>)</button>
       </div>
       <div class="grid" id="grid-lists"></div>
     </div>
 
+    <!-- ВКЛАДКА 4: ЗАГРУЗКИ В ТГК -->
     <div class="tab-pane" id="pane-tracker">
-      <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
-        <b>📡 Задачи и история ТГК</b>
-        <div style="display:flex; gap:6px;">
-          <button class="pill" id="ping-btn">🔄 Обновить</button>
-          <button class="pill" id="clear-tasks">Очистить</button>
+      <div class="sec-head">
+        <h2>Очередь закачек на ПК и в ТГК</h2>
+        <div style="display:flex; gap:8px;">
+          <button class="tv-pill" id="ping-btn">🔄 Обновить</button>
+          <button class="tv-pill" id="clear-tasks">Очистить</button>
         </div>
       </div>
       <div id="tasks-box"></div>
     </div>
-  </main>
+  </div>
 
-  <!-- Модальное окно -->
+  <!-- МОДАЛЬНОЕ ОКНО: СЛЕВА ПЛЕЕР, СПРАВА ОЗВУЧКИ И СТАТУСЫ ПЛЕЕРОВ -->
   <div class="overlay" id="modal">
     <div class="sheet" id="sheet">
       <div class="drag-bar" id="drag-bar"><div class="drag-pill"></div></div>
       <div class="top-acts">
-        <button class="icon-btn" id="full-btn">⛶</button>
-        <button class="icon-btn" id="close-btn">✕</button>
+        <button class="icon-btn" id="full-btn" title="Во весь экран">⛶</button>
+        <button class="icon-btn" id="close-btn" title="Закрыть">✕</button>
       </div>
 
-      <div style="display:flex; gap:12px; padding-right:68px;">
-        <img id="m-poster" style="width:72px; aspect-ratio:2/3; border-radius:10px; object-fit:cover;">
+      <div style="display:flex; gap:14px; padding-right:72px; align-items:center;">
+        <img id="m-poster" style="width:68px; aspect-ratio:2/3; border-radius:10px; object-fit:cover;">
         <div>
-          <h2 id="m-title" style="font-size:15.5px;"></h2>
-          <p id="m-meta" style="font-size:11.5px; color:var(--muted); margin:3px 0;"></p>
+          <h2 id="m-title" style="font-size:17px; font-weight:900;"></h2>
+          <p id="m-meta" style="font-size:12px; color:var(--muted); margin:3px 0;"></p>
           <div style="display:flex; gap:6px; margin-top:6px;">
-            <button class="pill" id="add-w">🔖 В список</button>
-            <button class="pill" id="add-d">👁 Смотрел</button>
+            <button class="tv-pill" id="add-w" style="padding:5px 11px; font-size:11.5px;">🔖 В список</button>
+            <button class="tv-pill" id="add-d" style="padding:5px 11px; font-size:11.5px;">👁 Смотрел</button>
           </div>
         </div>
       </div>
 
       <div class="mode-switch">
-        <button class="mode-btn active" id="mode-dl">🚀 Скачать в ТГК (1080p)</button>
-        <button class="mode-btn" id="mode-watch">▶️ Смотреть онлайн</button>
+        <button class="mode-btn active" id="mode-watch">▶️ Смотреть онлайн (Анти-блок РФ)</button>
+        <button class="mode-btn" id="mode-dl">🚀 Скачать в ТГК (1080p)</button>
       </div>
 
-      <div class="player-wrap" id="player-wrap">
-        <video id="hls-video" controls playsinline style="display:none;"></video>
-        <iframe id="iframe-player" allowfullscreen allow="autoplay *; fullscreen *"></iframe>
-      </div>
+      <!-- ДВУХКОЛОНОЧНАЯ ЗОНА ПРОСМОТРА И УПРАВЛЕНИЯ (КАК НА 2 ФОТО) -->
+      <div class="watch-workspace">
+        <!-- Левая колонка: Видеоплеер + Настройки скачивания -->
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div class="player-stage active" id="player-wrap">
+            <video id="hls-video" playsinline style="display:none;"></video>
+            <!-- Кастомный интерфейс нашего собственного плеера -->
+            <div class="custom-ui-bar" id="custom-ui">
+              <input type="range" class="c-seek" id="c-seek" value="0" min="0" max="100" step="0.1">
+              <div class="c-btns">
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <button class="tv-pill" id="c-play" style="padding:4px 10px;">⏸</button>
+                  <button class="tv-pill" id="c-rew" style="padding:4px 8px;">-10с</button>
+                  <button class="tv-pill" id="c-fwd" style="padding:4px 8px;">+10с</button>
+                  <span id="c-time">00:00 / 00:00</span>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button class="tv-pill" id="c-speed" style="padding:4px 8px;">1x</button>
+                  <button class="tv-pill" id="c-full" style="padding:4px 8px;">⛶</button>
+                </div>
+              </div>
+            </div>
+            <iframe id="iframe-player" scrolling="no" allowfullscreen allow="autoplay *; fullscreen *"></iframe>
+          </div>
 
-      <!-- Единый нижний Control Bar -->
-      <div class="ctrl-bar">
-        <button class="ctrl-btn" id="open-voices"><span>🎙 Озвучка:</span><b id="cur-voice">...</b></button>
-        <button class="ctrl-btn" id="open-players"><span>⚡ Плеер:</span><b id="cur-player">Авто</b></button>
-      </div>
-      <div class="popover" id="pop-voices"></div>
-      <div class="popover" id="pop-players"></div>
-
-      <!-- Сезоны и серии -->
-      <div class="serial-box" id="serial-box">
-        <div style="display:flex; gap:6px; overflow-x:auto;" id="season-row"></div>
-        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px;" id="scope-row">
-          <div class="chip active" data-s="selected">Выбрать серии</div>
-          <div class="chip" data-s="season">Весь сезон</div>
-          <div class="chip" data-s="all_seasons">Весь сериал</div>
+          <div id="dl-box" style="display:none; flex-direction:column; gap:10px; background:rgba(0,0,0,0.35); padding:14px; border-radius:16px; border:1px solid var(--border);">
+            <div style="font-size:13px; font-weight:800;">⚙️ Параметры скачивания на ПК и выгрузки в ТГК:</div>
+            <div style="display:flex; gap:8px;">
+              <select id="m-qual">
+                <option value="1080" selected>🔥 1080p (Full HD — Максимальное)</option>
+                <option value="720">720p (HD Оптимальное)</option>
+                <option value="480">480p (Компактное)</option>
+              </select>
+              <select id="m-fmt"><option value="mp4" selected>MP4 (Стриминг iOS/Android)</option><option value="mkv">MKV</option></select>
+            </div>
+            <button class="act-btn" id="dl-btn">🚀 Скачать выбранной озвучкой в ТГК + ЛС</button>
+          </div>
         </div>
-        <div class="ep-grid" id="ep-grid"></div>
-      </div>
 
-      <div id="dl-box" style="display:flex; flex-direction:column; gap:8px;">
-        <div style="display:flex; gap:8px;">
-          <select id="m-qual">
-            <option value="1080" selected>🔥 1080p (Full HD)</option>
-            <option value="720">720p (HD)</option>
-            <option value="480">480p</option>
-          </select>
-          <select id="m-fmt"><option value="mp4" selected>MP4 (iOS/Android)</option><option value="mkv">MKV</option></select>
-        </div>
-        <button class="act-btn" id="dl-btn">🚀 Скачать в ТГК + прислать в ЛС</button>
+        <!-- Правая колонка: Выбор озвучки, Пинг плееров (🟢/🟡/🔴) и Серии -->
+        <aside class="right-sidebar">
+          <div class="side-label">
+            <span>🎙 Озвучка / Перевод</span>
+            <span id="voice-cnt-lbl" style="color:var(--cyan);">Поиск...</span>
+          </div>
+          <div class="voice-list" id="voice-list"></div>
+
+          <div class="side-label" style="margin-top:6px;">
+            <span>⚡ Плееры и проверка РФ</span>
+            <span id="ping-status-lbl" style="color:#4ade80;">Авто-тест...</span>
+          </div>
+          <div class="player-list" id="player-list"></div>
+
+          <!-- Сезоны и серии -->
+          <div class="serial-box" id="serial-box">
+            <div class="side-label"><span>📺 Сезоны и серии</span></div>
+            <div style="display:flex; gap:5px; overflow-x:auto;" id="season-row"></div>
+            <div style="display:none; grid-template-columns:repeat(3,1fr); gap:5px;" id="scope-row">
+              <div class="chip active" data-s="selected">Серии</div>
+              <div class="chip" data-s="season">Сезон</div>
+              <div class="chip" data-s="all_seasons">Весь сериал</div>
+            </div>
+            <div class="ep-grid" id="ep-grid"></div>
+          </div>
+        </aside>
       </div>
     </div>
   </div>
 
+  <!-- ПАРЯЩИЙ DOCK -->
   <div class="dock-wrap">
     <nav class="dock">
-      <button class="dock-btn active" data-p="pane-search"><span>🔍</span><span>Поиск</span></button>
-      <button class="dock-btn" data-p="pane-recs"><span>✨</span><span>Для тебя</span></button>
-      <button class="dock-btn" data-p="pane-lists"><span>📌</span><span>Списки</span></button>
-      <button class="dock-btn" data-p="pane-tracker"><span>📊</span><span>Загрузки</span></button>
+      <button class="dock-btn active" data-p="pane-search"><span>🎬</span><span>Каталог</span></button>
+      <button class="dock-btn" data-p="pane-recs"><span>✨</span><span>Подборки</span></button>
+      <button class="dock-btn" data-p="pane-lists"><span>🔖</span><span>Избранное</span></button>
+      <button class="dock-btn" data-p="pane-tracker"><span>📡</span><span>Загрузки</span></button>
     </nav>
   </div>
 
@@ -301,11 +572,11 @@
 
     let curMovie = null, voiceGroups = [], curGroup = null, curSource = null;
     let curSeason = '1', dlScope = 'selected', epSet = new Set(['1']);
-    let watchMode = false, srvOnline = false, hls = null, focusIdx = -1, listMode = 'watch';
+    let watchMode = true, srvOnline = false, hls = null, focusIdx = -1, listMode = 'watch';
 
     $('in-srv').value = srvUrl; $('in-kp').value = kpKey; $('in-uid').value = tgUid;
 
-    // 1. Звуковой синтезатор Nintendo Switch
+    // === 1. ЧАСЫ, ДАТА И ЗВУК CLEANYOURTV ===
     let actx = null;
     function sfx(t = 'tick') {
       if (!sfxOn) return;
@@ -315,20 +586,27 @@
         const o = actx.createOscillator(), g = actx.createGain(), now = actx.currentTime;
         o.connect(g); g.connect(actx.destination);
         o.type = t === 'pop' ? 'triangle' : 'sine';
-        o.frequency.setValueAtTime(t === 'pop' ? 520 : 880, now);
-        o.frequency.exponentialRampToValueAtTime(t === 'pop' ? 1040 : 1320, now + (t === 'pop' ? 0.05 : 0.025));
-        g.gain.setValueAtTime(t === 'pop' ? 0.06 : 0.035, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + (t === 'pop' ? 0.06 : 0.03));
-        o.start(now); o.stop(now + 0.065);
+        o.frequency.setValueAtTime(t === 'pop' ? 540 : 900, now);
+        o.frequency.exponentialRampToValueAtTime(t === 'pop' ? 1080 : 1350, now + 0.035);
+        g.gain.setValueAtTime(0.045, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        o.start(now); o.stop(now + 0.045);
       } catch {}
     }
-    const updSfxBtn = () => $('sfx-btn').textContent = sfxOn ? '🔊' : '🔇';
+
+    function updateDashboardClock() {
+      const d = new Date(), h = d.getHours();
+      $('clock').textContent = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      $('tv-date').textContent = d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
+      $('tv-greeting').textContent = (h < 12 ? 'ДОБРОЕ УТРО' : h < 18 ? 'ДОБРЫЙ ДЕНЬ' : 'ДОБРЫЙ ВЕЧЕР') + ' • CLEANYOURTV OS';
+    }
+    setInterval(updateDashboardClock, 10000); updateDashboardClock();
+
+    const updSfxBtn = () => $('sfx-btn').textContent = sfxOn ? '🔊 Звук' : '🔇 Тихо';
     updSfxBtn();
     $('sfx-btn').onclick = () => { sfxOn = !sfxOn; localStorage.setItem('vg_sfx', sfxOn ? 'on' : 'off'); updSfxBtn(); sfx('pop'); };
-    setInterval(() => $('clock').textContent = new Date().toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' }), 10000);
-    $('clock').textContent = new Date().toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
 
-    // 2. Нормализация озвучек
+    // === 2. НОРМАЛИЗАТОР ОЗВУЧЕК И АНТИ-РКН ПРОВЕРКА ДОМЕНОВ ===
     const V_RULES = [
       ["🎬 Дубляж (Официальный)", ["дубляж", "дублирован", "мосфильм", "пифагор", "лицензия", "red head sound", "rhs", "dub"]],
       ["🎙 HDRezka Studio", ["hdrezka", "rezka", "резка"]],
@@ -338,7 +616,7 @@
       ["🎙 Jaskier", ["jaskier", "яскьер"]],
       ["🎙 АниЛибрия", ["anilibria", "анилибрия"]],
       ["🎙 Студийная Банда", ["студийная банда"]],
-      ["🎙 Авторский (Гоблин)", ["гоблин", "пучков", "гаврилов"]],
+      ["🎙 Многоголосый (MVO)", ["многоголос", "мво", "mvo", "профессиональн"]],
       ["🇬🇧 Оригинал (Eng + Sub)", ["оригинал", "original", "eng", "sub"]]
     ];
     const normVoice = r => {
@@ -347,72 +625,82 @@
       const cl = (r || '').replace(/\[.*?\]|\(.*?\)/g, '').trim();
       return cl ? `🎙 ${cl}` : "🎬 Дубляж (Официальный)";
     };
-    const fixMirror = u => u ? (u.startsWith('//') ? 'https:' + u : u).replace(/kodik\.info|aniqit\.com/g, 'kodik.biz') : '';
+    const fixMirror = u => u ? (u.startsWith('//') ? 'https:' + u : u).replace(/kodik\.info|aniqit\.com|kodik\.cc/g, 'kodik.biz') : '';
 
-    // 3. Навигация Dock + Клавиатура ПК
-    document.querySelectorAll('.dock-btn').forEach(b => b.onclick = () => {
-      sfx('pop');
-      document.querySelectorAll('.dock-btn, .tab-pane').forEach(el => el.classList.remove('active'));
-      b.classList.add('active'); $(b.dataset.p).classList.add('active'); focusIdx = -1;
-      if (b.dataset.p === 'pane-recs') renderRecs();
-      if (b.dataset.p === 'pane-lists') renderLists();
-      if (b.dataset.p === 'pane-tracker') pingServer();
-    });
+    // Живой пинг домена плеера из браузера пользователя (проверяет, не сбросил ли провайдер РФ соединение)
+    async function probePlayerReachability(src) {
+      if (src.is_custom_hls) {
+        src.status = srvOnline ? 'ok' : 'warn';
+        src.ping = srvOnline ? 'Прокси ПК' : 'Авто-зеркало';
+        return src;
+      }
+      if (!src.iframe_url) {
+        src.status = 'warn'; src.ping = 'Нет раздачи'; return src;
+      }
+      const t0 = performance.now();
+      try {
+        const origin = new URL(src.iframe_url).origin;
+        await fetch(origin, { mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(1700) });
+        const ms = Math.round(performance.now() - t0);
+        src.status = src.has_stream === false ? 'warn' : 'ok';
+        src.ping = src.has_stream === false ? 'Подбор...' : `${ms} мс`;
+      } catch {
+        src.status = 'err';
+        src.ping = 'Блок в РФ';
+      }
+      return src;
+    }
 
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && $('modal').style.display === 'flex') return closeModal();
-      if ($('modal').style.display === 'flex' || document.activeElement.tagName === 'INPUT') return;
-      const cards = [...document.querySelectorAll('.tab-pane.active .card')];
-      if (!cards.length) return;
-      const cols = innerWidth >= 980 ? 5 : (innerWidth >= 640 ? 4 : 2);
-      const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols }[e.key];
-      if (step !== undefined) {
-        e.preventDefault(); sfx('tick');
-        focusIdx = Math.max(0, Math.min(cards.length - 1, focusIdx < 0 ? 0 : focusIdx + step));
-        cards.forEach((c, i) => c.classList.toggle('tv-focus', i === focusIdx));
-        cards[focusIdx]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      } else if (e.key === 'Enter' && cards[focusIdx]) cards[focusIdx].click();
-    });
-
-    $('cfg-btn').onclick = () => { sfx(); $('drawer').classList.toggle('open'); };
-    $('save-cfg').onclick = () => {
-      sfx('pop');
-      srvUrl = $('in-srv').value.trim().replace(/\/$/, '') || 'http://127.0.0.1:8765';
-      kpKey = $('in-kp').value.trim() || DEF_KP; tgUid = $('in-uid').value.trim();
-      localStorage.setItem('vg_srv', srvUrl); localStorage.setItem('vg_kp', kpKey); localStorage.setItem('vg_uid', tgUid);
-      $('drawer').classList.remove('open'); pingServer();
-    };
-
-    // 4. Быстрый поиск озвучек и плееров (с кэшем)
-    async function fetchSourcesFast(m) {
+    // === 3. ПОИСК И ТЕСТИРОВАНИЕ ВСЕХ ПЛЕЕРОВ ===
+    async function fetchAndVerifySources(m) {
       const key = `${m.kp_id}_${m.imdb_id}_${m.title}`.toLowerCase();
       if (memCache.has(key)) return memCache.get(key);
 
       const list = [];
-      if (m.kp_id) list.push({ balancer: 'MultiPlayer HD', voice_canonical: '🎬 Дубляж (Официальный)', voice_raw: 'Мульти-плеер 1080p', quality: '1080p', quality_rank: 1080, iframe_url: `https://ddbb.lol/?kp=${m.kp_id}`, seasons: {} });
-      if (m.imdb_id) list.push({ balancer: 'VidSrc 1080p', voice_canonical: '🇬🇧 Оригинал (Eng + Sub)', voice_raw: 'English 1080p', quality: '1080p', quality_rank: 1080, iframe_url: `https://vidsrc.xyz/embed/movie/${m.imdb_id}`, seasons: {} });
-
       const cleanT = m.title.replace(/\(\d{4}\)|[:\-–]/g, ' ').trim();
-      if (srvOnline) {
-        try {
-          const q = new URLSearchParams({ title: cleanT, orig_title: m.orig_title || '', year: m.year || '', kp_id: m.kp_id || '', imdb_id: m.imdb_id || '' });
-          const r = await fetch(`${srvUrl}/api/sources?${q}`, { signal: AbortSignal.timeout(2000) });
-          if (r.ok) {
-            const d = await r.json();
-            if (d.results?.length) { const res = [...d.results, ...list]; memCache.set(key, res); return res; }
-          }
-        } catch {}
+
+      // 1. Наш собственный кастомный плеер CleanYourTV (работает через серверный прокси или мульти-зеркало)
+      list.push({
+        balancer: '⚡ Наш Плеер CleanYourTV',
+        voice_canonical: '🎬 Дубляж (Официальный)',
+        voice_raw: 'Прямой поток 1080p',
+        quality: '1080p',
+        quality_rank: 1090,
+        iframe_url: m.kp_id ? `https://flicksbar.mom/film/${m.kp_id}/` : '',
+        is_custom_hls: true,
+        has_stream: true,
+        seasons: {}
+      });
+
+      // 2. Анти-РКН зеркало Flicksbar (открывает Kinobox/Alloha/Kodik в РФ без VPN)
+      if (m.kp_id && /^\d+$/.test(m.kp_id)) {
+        list.push({
+          balancer: 'Flicksbar РФ (Анти-блок)',
+          voice_canonical: '🎬 Дубляж (Официальный)',
+          voice_raw: 'Мульти-зеркало РФ',
+          quality: '1080p',
+          quality_rank: 1085,
+          iframe_url: `https://flicksbar.mom/film/${m.kp_id}/`,
+          has_stream: true,
+          seasons: {}
+        });
       }
 
       const fastGet = async u => {
         for (const t of [u, `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`]) {
-          try { const r = await fetch(t, { signal: AbortSignal.timeout(1900) }); if (r.ok) return await r.json(); } catch {}
+          try { const r = await fetch(t, { signal: AbortSignal.timeout(2100) }); if (r.ok) return await r.json(); } catch {}
         }
         return null;
       };
 
-      const kdUrl = m.kp_id ? `https://kodikapi.com/search?token=${KODIK_TOK}&kinopoisk_id=${m.kp_id}&with_episodes=true` : `https://kodikapi.com/search?token=${KODIK_TOK}&title=${encodeURIComponent(cleanT)}&with_episodes=true`;
-      const [kdRes, kbRes] = await Promise.allSettled([fastGet(kdUrl), m.kp_id ? fastGet(`https://api.kinobox.tv/api/players?kinopoisk=${m.kp_id}`) : null]);
+      const kdUrl = m.kp_id
+        ? `https://kodikapi.com/search?token=${KODIK_TOK}&kinopoisk_id=${m.kp_id}&with_episodes=true`
+        : `https://kodikapi.com/search?token=${KODIK_TOK}&title=${encodeURIComponent(cleanT)}&with_episodes=true`;
+
+      const [kdRes, kbRes] = await Promise.allSettled([
+        fastGet(kdUrl),
+        m.kp_id ? fastGet(`https://api.kinobox.tv/api/players?kinopoisk=${m.kp_id}`) : Promise.resolve(null)
+      ]);
 
       (kdRes.value?.results || []).forEach(it => {
         const rv = it.translation?.title || 'Дубляж';
@@ -420,7 +708,17 @@
         if (it.seasons) Object.entries(it.seasons).forEach(([sk, sv]) => {
           seasons[sk] = { episodes: Object.fromEntries(Object.entries(sv.episodes || {}).map(([ek, ev]) => [ek, fixMirror(typeof ev === 'string' ? ev : ev.link)])) };
         });
-        list.push({ balancer: 'Kodik', voice_canonical: normVoice(rv), voice_raw: rv, quality: '1080p', quality_rank: 1080, iframe_url: fixMirror(it.link), is_serial: Boolean(it.seasons), seasons });
+        list.push({
+          balancer: 'Kodik (.biz зеркало)',
+          voice_canonical: normVoice(rv),
+          voice_raw: rv,
+          quality: '1080p',
+          quality_rank: 1080,
+          iframe_url: fixMirror(it.link),
+          is_serial: Boolean(it.seasons),
+          has_stream: true,
+          seasons
+        });
       });
 
       const kbItems = Array.isArray(kbRes.value) ? kbRes.value : (kbRes.value?.data || []);
@@ -429,61 +727,173 @@
         if (!ifr || b === 'KODIK') return;
         (p.translations || [{ name: 'Дубляж' }]).forEach(tr => {
           const rv = tr.name || tr.title || 'Дубляж';
-          list.push({ balancer: b, voice_canonical: normVoice(rv), voice_raw: rv, quality: '1080p', quality_rank: 1080, iframe_url: ifr, seasons: {} });
+          list.push({
+            balancer: b,
+            voice_canonical: normVoice(rv),
+            voice_raw: rv,
+            quality: '1080p',
+            quality_rank: 1075,
+            iframe_url: ifr,
+            has_stream: true,
+            seasons: {}
+          });
         });
       });
+
+      // Параллельно проверяем доступность каждого плеера из браузера пользователя
+      await Promise.allSettled(list.map(s => probePlayerReachability(s)));
+
+      // Сортируем: сначала рабочие (🟢 ok), затем желтые (🟡 warn), а заблокированные в РФ (🔴 err) в самый низ
+      const rankMap = { ok: 3, warn: 2, err: 1 };
+      list.sort((a, b) => (rankMap[b.status] - rankMap[a.status]) || (b.quality_rank - a.quality_rank));
 
       memCache.set(key, list);
       return list;
     }
 
-    // 5. Модалка, Control Bar и Плееры
+    // === 4. ОТКРЫТИЕ МОДАЛКИ И ПРАВАЯ БОКОВАЯ ПАНЕЛЬ (ОЗВУЧКИ + ПЛЕЕРЫ) ===
     async function openCard(m) {
       sfx('pop'); curMovie = m; addInterest(m, 1);
       $('sheet').classList.remove('fullscreen'); $('sheet').style.transform = '';
-      $('m-poster').src = m.poster || `https://placehold.co/300x450/11192c/00d2ff?text=${encodeURIComponent(m.title.slice(0, 14))}`;
+      $('m-poster').src = m.poster || `https://placehold.co/300x450/151928/a855f7?text=${encodeURIComponent(m.title.slice(0, 14))}`;
       $('m-title').textContent = `${m.title} ${m.year ? '(' + m.year + ')' : ''}`;
-      $('m-meta').textContent = `★ ${m.rating} • ${m.director || 'Кино'}`;
-      $('pop-voices').classList.remove('open'); $('pop-players').classList.remove('open');
-      setMode(false); $('modal').style.display = 'flex';
-      $('cur-voice').textContent = 'Загрузка...';
+      $('m-meta').textContent = `★ ${m.rating} • ${m.director || 'Премьера'}`;
 
-      const raw = await fetchSourcesFast(m);
+      $('voice-list').innerHTML = `<div class="msg" style="padding:10px;">⏳ Проверка раздач и пинга в РФ...</div>`;
+      $('player-list').innerHTML = '';
+      $('modal').style.display = 'flex';
+      setMode(true);
+
+      const verified = await fetchAndVerifySources(m);
       const map = new Map();
-      raw.forEach(s => {
-        if (!map.has(s.voice_canonical)) map.set(s.voice_canonical, { canon: s.voice_canonical, primary: s, all: [s] });
-        else { const g = map.get(s.voice_canonical); g.all.push(s); if (s.is_serial && !g.primary.is_serial) g.primary = s; }
+      verified.forEach(s => {
+        if (!map.has(s.voice_canonical)) {
+          map.set(s.voice_canonical, { canon: s.voice_canonical, primary: s, all: [s] });
+        } else {
+          const g = map.get(s.voice_canonical);
+          g.all.push(s);
+          if (s.status === 'ok' && g.primary.status !== 'ok') g.primary = s;
+          if (s.is_serial && !g.primary.is_serial && s.status !== 'err') g.primary = s;
+        }
       });
+
       voiceGroups = [...map.values()];
-      if (!voiceGroups.length) voiceGroups = [{ canon: '🎬 Дубляж (Официальный)', primary: { balancer: 'Auto', iframe_url: '', seasons: {} }, all: [] }];
+      $('voice-cnt-lbl').textContent = `${voiceGroups.length} дорожек`;
+      const okCount = verified.filter(x => x.status === 'ok').length;
+      $('ping-status-lbl').textContent = `🟢 Доступно: ${okCount}`;
+
       pickVoiceGroup(voiceGroups[0]);
     }
 
     function pickVoiceGroup(g) {
-      curGroup = g; curSource = g.primary;
-      $('cur-voice').textContent = g.canon.replace(/^[^\s]+\s/, '');
-      $('cur-player').textContent = curSource.balancer;
-      renderSeasons(curSource); renderPopovers();
-      if (watchMode) playCurrent();
+      curGroup = g;
+      // Автоматически выбираем первый рабочий (🟢) плеер в этой озвучке
+      const firstWorking = g.all.find(x => x.status === 'ok' && !x.is_custom_hls) || g.all.find(x => x.status === 'ok') || g.primary;
+      curSource = firstWorking;
+      renderRightSidebar();
+      renderSeasons(curSource);
+      if (watchMode) launchSelectedPlayer(curSource);
     }
 
-    function renderPopovers() {
-      $('pop-voices').innerHTML = voiceGroups.map((g, i) => `<div class="pop-opt ${g === curGroup ? 'selected' : ''}" data-i="${i}"><span>${g.canon}</span><b>1080p • ${g.all.length} пл.</b></div>`).join('');
-      $('pop-voices').querySelectorAll('.pop-opt').forEach(el => el.onclick = () => { sfx(); pickVoiceGroup(voiceGroups[el.dataset.i]); $('pop-voices').classList.remove('open'); });
+    function renderRightSidebar() {
+      // 1. Рендер списка озвучек справа
+      $('voice-list').innerHTML = voiceGroups.map((g, i) => {
+        const hasOk = g.all.some(x => x.status === 'ok');
+        const badge = hasOk ? `<span class="status-tag st-ok">🟢 ${g.all.length} пл.</span>` : `<span class="status-tag st-warn">🟡 Резерв</span>`;
+        return `<button class="side-item ${g === curGroup ? 'active' : ''}" data-i="${i}"><span>${g.canon}</span>${badge}</button>`;
+      }).join('');
 
-      let pHtml = srvOnline ? `<div class="pop-opt" data-hls="1"><span>⚡ Свой CleanYourTV HLS-Плеер</span><b>Без рекламы</b></div>` : '';
-      pHtml += (curGroup?.all || []).map((s, i) => `<div class="pop-opt ${s === curSource ? 'selected' : ''}" data-i="${i}"><span>▶️ ${s.balancer} (${s.voice_raw})</span><b>${s.quality}</b></div>`).join('');
-      $('pop-players').innerHTML = pHtml;
-      $('pop-players').querySelectorAll('.pop-opt').forEach(el => el.onclick = () => {
-        sfx(); $('pop-players').classList.remove('open');
+      $('voice-list').querySelectorAll('.side-item').forEach(btn => btn.onclick = () => {
+        sfx(); pickVoiceGroup(voiceGroups[btn.dataset.i]);
+      });
+
+      // 2. Рендер списка плееров со статусом работоспособности (🟢 Раздача / 🟡 Нет / 🔴 Блок в РФ)
+      $('player-list').innerHTML = (curGroup?.all || []).map((s, i) => {
+        const stClass = s.status === 'ok' ? 'st-ok' : (s.status === 'warn' ? 'st-warn' : 'st-err');
+        const stIcon = s.status === 'ok' ? '🟢' : (s.status === 'warn' ? '🟡' : '🔴');
+        return `
+          <button class="side-item ${s === curSource ? 'active' : ''}" data-i="${i}">
+            <span>▶️ ${s.balancer}</span>
+            <span class="status-tag ${stClass}">${stIcon} ${s.ping || '1080p'}</span>
+          </button>
+        `;
+      }).join('');
+
+      $('player-list').querySelectorAll('.side-item').forEach(btn => btn.onclick = () => {
+        sfx('pop');
+        curSource = curGroup.all[btn.dataset.i];
+        renderRightSidebar();
+        renderSeasons(curSource);
         if (!watchMode) setMode(true);
-        if (el.dataset.hls) { $('cur-player').textContent = 'Свой HLS'; playCustomHls(curSource); }
-        else { curSource = curGroup.all[el.dataset.i]; $('cur-player').textContent = curSource.balancer; renderSeasons(curSource); playCurrent(); }
+        else launchSelectedPlayer(curSource);
       });
     }
 
-    $('open-voices').onclick = () => { sfx(); $('pop-players').classList.remove('open'); $('pop-voices').classList.toggle('open'); };
-    $('open-players').onclick = () => { sfx(); $('pop-voices').classList.remove('open'); $('pop-players').classList.toggle('open'); };
+    // === 5. НАШ КАСТОМНЫЙ ПЛЕЕР CLEANYOURTV + АНТИ-РКН ЗАПУСК ===
+    function stopPlayers() {
+      if (hls) { hls.destroy(); hls = null; }
+      const v = $('hls-video');
+      v.pause(); v.removeAttribute('src'); v.style.display = 'none';
+      $('custom-ui').classList.remove('active');
+      $('iframe-player').src = ''; $('iframe-player').style.display = 'block';
+    }
+
+    function getEpUrl(src) {
+      if (!src) return '';
+      const ep = [...epSet][0] || '1';
+      return fixMirror(src.seasons?.[curSeason]?.episodes?.[ep] || src.iframe_url || '');
+    }
+
+    async function launchSelectedPlayer(src) {
+      stopPlayers();
+      if (!src) return;
+
+      // Если выбран наш собственный кастомный плеер и сервер на связи — тянем прямой поток через прокси
+      if (src.is_custom_hls && srvOnline) {
+        const donor = curGroup.all.find(x => !x.is_custom_hls && x.iframe_url) || src;
+        try {
+          const r = await fetch(`${srvUrl}/api/resolve_stream?url=${encodeURIComponent(getEpUrl(donor))}`, { signal: AbortSignal.timeout(4500) });
+          if (r.ok) {
+            const d = await r.json();
+            if (d.is_direct && d.proxy_url) {
+              const streamUrl = `${srvUrl}${d.proxy_url}`;
+              const v = $('hls-video');
+              $('iframe-player').style.display = 'none';
+              v.style.display = 'block';
+              $('custom-ui').classList.add('active');
+              if (d.is_hls && Hls.isSupported()) {
+                hls = new Hls(); hls.loadSource(streamUrl); hls.attachMedia(v);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => v.play().catch(()=>{}));
+              } else {
+                v.src = streamUrl; v.play().catch(()=>{});
+              }
+              return;
+            }
+          }
+        } catch {}
+      }
+
+      // Запуск проверенного веб-балансера
+      let targetUrl = getEpUrl(src);
+      if (!targetUrl && curMovie?.kp_id) targetUrl = `https://flicksbar.mom/film/${curMovie.kp_id}/`;
+      $('iframe-player').src = targetUrl;
+    }
+
+    // Управление кастомным UI нашего видеоплеера
+    const vid = $('hls-video');
+    const fmtSec = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    vid.ontimeupdate = () => {
+      if (!vid.duration) return;
+      $('c-seek').value = (vid.currentTime / vid.duration) * 100;
+      $('c-time').textContent = `${fmtSec(vid.currentTime)} / ${fmtSec(vid.duration)}`;
+    };
+    $('c-seek').oninput = e => { if (vid.duration) vid.currentTime = (e.target.value / 100) * vid.duration; };
+    $('c-play').onclick = () => { vid.paused ? vid.play() : vid.pause(); $('c-play').textContent = vid.paused ? '▶' : '⏸'; };
+    $('c-rew').onclick = () => vid.currentTime = Math.max(0, vid.currentTime - 10);
+    $('c-fwd').onclick = () => vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 10);
+    const speeds = [1, 1.25, 1.5, 2]; let spIdx = 0;
+    $('c-speed').onclick = () => { spIdx = (spIdx + 1) % speeds.length; vid.playbackRate = speeds[spIdx]; $('c-speed').textContent = speeds[spIdx] + 'x'; };
+    $('c-full').onclick = () => ($('player-wrap').requestFullscreen || $('player-wrap').webkitRequestFullscreen)?.call($('player-wrap'));
 
     function setMode(watch) {
       watchMode = watch;
@@ -491,51 +901,20 @@
       $('player-wrap').classList.toggle('active', watch);
       $('dl-box').style.display = watch ? 'none' : 'flex';
       $('scope-row').style.display = watch ? 'none' : 'grid';
-      if (watch) { addInterest(curMovie, 3); playCurrent(); } else stopPlayers();
+      if (watch) { addInterest(curMovie, 3); launchSelectedPlayer(curSource); } else stopPlayers();
     }
     $('mode-watch').onclick = () => { sfx('pop'); setMode(true); };
     $('mode-dl').onclick = () => { sfx('pop'); setMode(false); };
 
-    function stopPlayers() {
-      if (hls) { hls.destroy(); hls = null; }
-      $('hls-video').pause(); $('hls-video').style.display = 'none';
-      $('iframe-player').src = ''; $('iframe-player').style.display = 'block';
-    }
-
-    function getEpUrl(src) {
-      if (!src) return '';
-      const ep = [...epSet][0] || '1';
-      return fixMirror(src.seasons?.[curSeason]?.episodes?.[ep] || src.iframe_url || (curMovie?.kp_id ? `https://ddbb.lol/?kp=${curMovie.kp_id}` : ''));
-    }
-
-    function playCurrent() {
-      stopPlayers();
-      $('iframe-player').src = getEpUrl(curSource);
-    }
-
-    async function playCustomHls(src) {
-      stopPlayers();
-      try {
-        const r = await fetch(`${srvUrl}/api/resolve_stream?url=${encodeURIComponent(getEpUrl(src))}`);
-        const d = await r.json();
-        if (d.proxy_url && d.is_hls) {
-          const u = `${srvUrl}${d.proxy_url}`, v = $('hls-video');
-          $('iframe-player').style.display = 'none'; v.style.display = 'block';
-          if (Hls.isSupported()) { hls = new Hls(); hls.loadSource(u); hls.attachMedia(v); hls.on(Hls.Events.MANIFEST_PARSED, () => v.play().catch(()=>{})); }
-          else { v.src = u; v.play().catch(()=>{}); }
-          return;
-        }
-      } catch {}
-      playCurrent();
-    }
-
+    // === 6. СЕЗОНЫ И СЕРИИ ===
     function renderSeasons(src) {
-      const sObj = src?.seasons;
+      const donor = src?.seasons && Object.keys(src.seasons).length ? src : curGroup?.all?.find(x => x.seasons && Object.keys(x.seasons).length);
+      const sObj = donor?.seasons;
       if (!sObj || !Object.keys(sObj).length) return $('serial-box').classList.remove('active');
       $('serial-box').classList.add('active');
       const keys = Object.keys(sObj).sort((a, b) => a - b);
       curSeason = keys[0];
-      $('season-row').innerHTML = keys.map(k => `<div class="chip ${k === curSeason ? 'active' : ''}" data-s="${k}">Сезон ${k}</div>`).join('');
+      $('season-row').innerHTML = keys.map(k => `<div class="chip ${k === curSeason ? 'active' : ''}" data-s="${k}">Сез. ${k}</div>`).join('');
       $('season-row').querySelectorAll('.chip').forEach(ch => ch.onclick = () => {
         sfx(); curSeason = ch.dataset.s;
         $('season-row').querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x === ch));
@@ -550,7 +929,7 @@
       $('ep-grid').innerHTML = eps.map(e => `<div class="chip ${e === eps[0] ? 'active' : ''}" data-e="${e}">Сер. ${e}</div>`).join('');
       $('ep-grid').querySelectorAll('.chip').forEach(ch => ch.onclick = () => {
         sfx(); const e = ch.dataset.e;
-        if (watchMode) { epSet = new Set([e]); $('ep-grid').querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x === ch)); playCurrent(); }
+        if (watchMode) { epSet = new Set([e]); $('ep-grid').querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x === ch)); launchSelectedPlayer(curSource); }
         else { epSet.has(e) && epSet.size > 1 ? epSet.delete(e) : epSet.add(e); ch.classList.toggle('active', epSet.has(e)); }
       });
     }
@@ -561,7 +940,183 @@
       $('ep-grid').style.display = dlScope === 'selected' ? 'grid' : 'none';
     });
 
-    // 6. Свайп шторки и закрытие
+    // === 7. КАТАЛОГ, МИРОВЫЕ ПРЕМЬЕРЫ И ПОДБОРКИ FLEX ===
+    const badPoster = u => !u || /no-poster|noposter|empty|placeholder/i.test(u);
+    async function fixPoster(m, img) {
+      try {
+        const r = await fetch(`https://imdb.iamidiotareyoutoo.com/search?q=${encodeURIComponent((m.orig_title || m.title) + ' ' + (m.year || ''))}`);
+        const d = await r.json();
+        const p = (d.description || []).find(x => !badPoster(x['#IMG_POSTER']))?.['#IMG_POSTER'];
+        if (p) img.src = m.poster = p;
+      } catch {}
+    }
+
+    async function queryCatalog(q, typeFilter = '') {
+      try {
+        let u = q
+          ? `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(q)}`
+          : `https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_ALL&page=1`;
+        if (typeFilter === 'TV_SERIES') u = `https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=POPULAR_SERIES&page=1`;
+        const r = await fetch(u, { headers: { 'X-API-KEY': kpKey } });
+        const d = await r.json();
+        return (d.films || d.items || []).map(f => ({
+          id: String(f.filmId || f.kinopoiskId || ''), kp_id: String(f.filmId || f.kinopoiskId || ''), imdb_id: String(f.imdbId || ''),
+          title: f.nameRu || f.nameEn || f.nameOriginal || 'Премьера', orig_title: f.nameEn || f.nameOriginal || '',
+          year: String(f.year || '2026'), poster: badPoster(f.posterUrlPreview) ? '' : f.posterUrlPreview,
+          cover: f.coverUrl || f.posterUrl || f.posterUrlPreview || '',
+          rating: (f.rating && f.rating !== 'null') ? f.rating : (f.ratingKinopoisk || '7.8'),
+          genre: f.genres?.[0]?.genre || 'фантастика', director: (f.genres || []).map(g => g.genre).slice(0, 2).join(', '),
+          country: f.countries?.[0]?.country || 'США',
+          overview: f.description || 'Мировая премьера в высоком качестве 1080p с выбором профессиональной озвучки.'
+        }));
+      } catch { return []; }
+    }
+
+    function renderHeroPremieres(list) {
+      const rail = $('hero-rail');
+      if (!rail.children.length && list.length) {
+        rail.innerHTML = list.slice(0, 7).map((m, idx) => `
+          <div class="hero-card" data-idx="${idx}">
+            <img class="hero-bg" src="${m.cover || m.poster}" loading="lazy">
+            <div class="hero-overlay">
+              <div style="font-size:11px; font-weight:800; color:#e2e8f0;">${m.director || 'Приключения'} &nbsp;18+</div>
+              <div class="hero-title">${m.title.toUpperCase()}</div>
+              <div class="hero-desc">${m.overview}</div>
+              <div class="hero-meta">
+                <span class="kp-pill">${m.rating}</span>
+                <span>• КП ${m.rating}</span>
+                <span>| ${m.year}</span>
+                <span>| ${m.country}</span>
+              </div>
+              <div class="hero-btns">
+                <button class="btn-purple">Перейти к фильму</button>
+                <button class="btn-ghost">Трейлер</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+        rail.querySelectorAll('.hero-card').forEach(c => c.onclick = () => openCard(list[c.dataset.idx]));
+      }
+    }
+
+    function renderGrid(list, box) {
+      box.innerHTML = '';
+      list.forEach(m => {
+        const el = document.createElement('div'); el.className = 'card';
+        const fb = `https://placehold.co/300x450/151928/a855f7?text=${encodeURIComponent(m.title.slice(0, 14))}`;
+        el.innerHTML = `
+          <div class="poster">
+            <span class="badge-left">Премьера</span>
+            <img src="${m.poster || fb}" loading="lazy">
+            <span class="badge-top">★ ${m.rating}</span>
+          </div>
+          <div class="c-info">
+            <div class="c-title">${m.title}</div>
+            <div class="c-meta">${m.year} • ${m.director || 'Full HD'}</div>
+          </div>
+        `;
+        const img = el.querySelector('img');
+        if (!m.poster) fixPoster(m, img);
+        img.onerror = () => fixPoster(m, img);
+        el.onmouseenter = () => sfx('tick');
+        el.onclick = () => openCard(m);
+        box.appendChild(el);
+      });
+    }
+
+    async function doSearch(q, typeFilter = '') {
+      $('status').style.display = 'block'; $('status').textContent = q ? `Ищем «${q}»...` : 'Загрузка каталога...';
+      const list = await queryCatalog(q, typeFilter);
+      $('status').style.display = list.length ? 'none' : 'block';
+      if (!list.length) $('status').textContent = 'Ничего не найдено.';
+      renderHeroPremieres(list);
+      renderGrid(list, $('grid-search'));
+    }
+
+    window.filterByType = (type, el) => {
+      sfx('pop');
+      document.querySelectorAll('.stat-box').forEach(b => b.classList.remove('active'));
+      if (el) el.classList.add('active');
+      if (type === 'FILM') { $('catalog-heading').textContent = 'Популярные фильмы'; doSearch('', 'FILM'); }
+      else if (type === 'TV_SERIES') { $('catalog-heading').textContent = 'Популярные сериалы'; doSearch('', 'TV_SERIES'); }
+      else if (type === 'MULT') { $('catalog-heading').textContent = 'Мультфильмы и анимация'; doSearch('Мультфильм'); }
+      else if (type === 'ANIME') { $('catalog-heading').textContent = 'Лучшее аниме'; doSearch('Аниме'); }
+    };
+
+    window.filterByPreset = q => { sfx('pop'); doSearch(q); };
+
+    $('quick-filters').querySelectorAll('.f-chip').forEach(btn => btn.onclick = () => {
+      sfx();
+      $('quick-filters').querySelectorAll('.f-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      doSearch(btn.dataset.q);
+    });
+
+    // Карточки коллекций в стиле второго скриншота FLEX
+    const FLEX_COLLECTIONS = [
+      {
+        title: "Самые жуткие новинки",
+        desc: "Лучшая коллекция для любителей пощекотать нервы! Здесь вы найдете самые свежие хорроры и триллеры, держащие в напряжении до самого финала.",
+        count: 15, query: "Ужасы",
+        img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=700&q=80"
+      },
+      {
+        title: "Картины мрачного будущего",
+        desc: "Подборка с фильмами и сериалами о постапокалипсисе, киберпанке и выживании человечества в суровых мирах будущего.",
+        count: 38, query: "Фантастика",
+        img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=700&q=80"
+      },
+      {
+        title: "Гангстеры и мафия",
+        desc: "Герои этих фильмов и сериалов находятся по ту сторону закона. Следим за увлекательными перипетиями криминального мира!",
+        count: 55, query: "Криминал",
+        img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=700&q=80"
+      }
+    ];
+
+    function renderFlexCollections() {
+      $('flex-collections').innerHTML = FLEX_COLLECTIONS.map((c, i) => `
+        <div class="col-card" data-i="${i}">
+          <img class="col-img" src="${c.img}" loading="lazy">
+          <div class="col-body">
+            <div>
+              <div class="col-title">${c.title}</div>
+              <div class="col-desc" style="margin-top:6px;">${c.desc}</div>
+            </div>
+            <div class="col-foot">
+              <span class="col-count">${c.count}</span>
+              <button class="btn-purple">Смотреть</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      $('flex-collections').querySelectorAll('.col-card').forEach(el => el.onclick = () => {
+        const c = FLEX_COLLECTIONS[el.dataset.i];
+        sfx('pop');
+        document.querySelector('[data-p="pane-search"]').click();
+        $('catalog-heading').textContent = `Подборка: ${c.title}`;
+        doSearch(c.query);
+      });
+    }
+
+    $('col-tags').querySelectorAll('.f-chip').forEach(btn => btn.onclick = () => {
+      sfx();
+      $('col-tags').querySelectorAll('.f-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderRecs(btn.dataset.q);
+    });
+
+    // === 8. НАВИГАЦИЯ DOCK, СВАЙПЫ И ОТПРАВКА В ТГК ===
+    document.querySelectorAll('.dock-btn').forEach(b => b.onclick = () => {
+      sfx('pop');
+      document.querySelectorAll('.dock-btn, .tab-pane').forEach(el => el.classList.remove('active'));
+      b.classList.add('active'); $(b.dataset.p).classList.add('active'); focusIdx = -1;
+      if (b.dataset.p === 'pane-recs') { renderFlexCollections(); renderRecs(); }
+      if (b.dataset.p === 'pane-lists') renderLists();
+      if (b.dataset.p === 'pane-tracker') pingServer();
+    });
+
     function closeModal() { sfx(); stopPlayers(); $('modal').style.display = 'none'; }
     $('close-btn').onclick = closeModal;
     $('full-btn').onclick = () => { sfx('pop'); $('sheet').classList.toggle('fullscreen'); };
@@ -577,57 +1132,15 @@
       else $('sheet').style.transform = '';
     });
 
-    // 7. Поиск каталога и постеров
-    const badPoster = u => !u || /no-poster|noposter|empty|placeholder/i.test(u);
-    async function fixPoster(m, img) {
-      try {
-        const r = await fetch(`https://imdb.iamidiotareyoutoo.com/search?q=${encodeURIComponent((m.orig_title || m.title) + ' ' + (m.year || ''))}`);
-        const d = await r.json();
-        const p = (d.description || []).find(x => !badPoster(x['#IMG_POSTER']))?.['#IMG_POSTER'];
-        if (p) { img.src = m.poster = p; }
-      } catch {}
-    }
+    $('cfg-btn').onclick = () => { sfx(); $('drawer').classList.toggle('open'); };
+    $('save-cfg').onclick = () => {
+      sfx('pop');
+      srvUrl = $('in-srv').value.trim().replace(/\/$/, '') || 'http://127.0.0.1:8765';
+      kpKey = $('in-kp').value.trim() || DEF_KP; tgUid = $('in-uid').value.trim();
+      localStorage.setItem('vg_srv', srvUrl); localStorage.setItem('vg_kp', kpKey); localStorage.setItem('vg_uid', tgUid);
+      $('drawer').classList.remove('open'); pingServer();
+    };
 
-    async function queryCatalog(q) {
-      try {
-        const u = q ? `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(q)}` : `https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_ALL&page=1`;
-        const r = await fetch(u, { headers: { 'X-API-KEY': kpKey } });
-        const d = await r.json();
-        return (d.films || d.items || []).map(f => ({
-          id: String(f.filmId || f.kinopoiskId || ''), kp_id: String(f.filmId || f.kinopoiskId || ''), imdb_id: String(f.imdbId || ''),
-          title: f.nameRu || f.nameEn || f.nameOriginal || 'Фильм', orig_title: f.nameEn || f.nameOriginal || '',
-          year: String(f.year || ''), poster: badPoster(f.posterUrlPreview) ? '' : f.posterUrlPreview,
-          rating: (f.rating && f.rating !== 'null') ? f.rating : (f.ratingKinopoisk || 'HD'),
-          genre: f.genres?.[0]?.genre || 'фантастика', director: (f.genres || []).map(g => g.genre).slice(0, 2).join(', '),
-          overview: f.description || ''
-        }));
-      } catch { return []; }
-    }
-
-    function renderGrid(list, box) {
-      box.innerHTML = '';
-      list.forEach(m => {
-        const el = document.createElement('div'); el.className = 'card';
-        const fb = `https://placehold.co/300x450/11192c/00d2ff?text=${encodeURIComponent(m.title.slice(0, 14))}`;
-        el.innerHTML = `<div class="poster"><img src="${m.poster || fb}" loading="lazy"><span class="badge">★ ${m.rating}</span></div><div class="c-info"><div class="c-title">${m.title}</div><div class="c-meta">${m.year || 'Кино'}</div></div>`;
-        const img = el.querySelector('img');
-        if (!m.poster) fixPoster(m, img);
-        img.onerror = () => fixPoster(m, img);
-        el.onmouseenter = () => sfx('tick');
-        el.onclick = () => openCard(m);
-        box.appendChild(el);
-      });
-    }
-
-    async function doSearch(q) {
-      $('status').style.display = 'block'; $('status').textContent = q ? `Ищем «${q}»...` : 'Загрузка...';
-      const list = await queryCatalog(q);
-      $('status').style.display = list.length ? 'none' : 'block';
-      if (!list.length) $('status').textContent = 'Ничего не найдено.';
-      renderGrid(list, $('grid-search'));
-    }
-
-    // 8. Отправка задач и Трекер
     $('dl-btn').onclick = async () => {
       if (!curMovie) return; sfx('pop'); addInterest(curMovie, 5);
       const isSer = $('serial-box').classList.contains('active');
@@ -656,30 +1169,29 @@
 
     async function pingServer() {
       if (location.protocol === 'https:' && srvUrl.startsWith('http://127.0.0.1')) {
-        srvOnline = false; $('srv-dot').classList.remove('online'); return renderOfflineTracker();
+        srvOnline = false; $('srv-dot').classList.remove('online'); $('srv-lbl').textContent = 'Облако ТГ'; return renderOfflineTracker();
       }
       try {
         const r = await fetch(`${srvUrl}/api/status`, { signal: AbortSignal.timeout(1600) });
         if (r.ok) {
-          const d = await r.json(); srvOnline = true; $('srv-dot').classList.add('online');
+          const d = await r.json(); srvOnline = true; $('srv-dot').classList.add('online'); $('srv-lbl').textContent = 'ПК Онлайн';
           const entries = Object.entries(d.tasks || {});
-          let h = entries.map(([id, t]) => `<div class="task-card"><div style="display:flex;justify-content:space-between;"><b>${t.title}</b><div><button class="pill" onclick="ctrlJob('${id}','${t.status==='paused'?'resume':'pause'}')">${t.status==='paused'?'▶':'⏸'}</button> <button class="pill" onclick="ctrlJob('${id}','cancel')">✕</button></div></div><div style="font-size:11px;color:var(--accent);margin-top:4px;">${t.stage} ${t.speed}</div><div class="bar"><div style="width:${t.progress||5}%"></div></div></div>`).join('');
-          h += (d.history || []).map(x => `<div class="task-card"><div style="display:flex;justify-content:space-between;"><b>✅ ${x.title} (${x.quality})</b><span>${x.size}</span></div>${x.post_url?`<a href="${x.post_url}" target="_blank" style="font-size:11px;color:var(--accent);">🍿 Открыть в ТГК</a>`:''}</div>`).join('');
+          let h = entries.map(([id, t]) => `<div class="task-card"><div style="display:flex;justify-content:space-between;"><b>${t.title}</b><div><button class="tv-pill" onclick="ctrlJob('${id}','${t.status==='paused'?'resume':'pause'}')">${t.status==='paused'?'▶':'⏸'}</button> <button class="tv-pill" onclick="ctrlJob('${id}','cancel')">✕</button></div></div><div style="font-size:11px;color:var(--cyan);margin-top:4px;">${t.stage} ${t.speed}</div><div class="bar"><div style="width:${t.progress||5}%"></div></div></div>`).join('');
+          h += (d.history || []).map(x => `<div class="task-card"><div style="display:flex;justify-content:space-between;"><b>✅ ${x.title} (${x.quality})</b><span>${x.size}</span></div>${x.post_url?`<a href="${x.post_url}" target="_blank" style="font-size:11px;color:var(--cyan);">🍿 Открыть в ТГК</a>`:''}</div>`).join('');
           $('tasks-box').innerHTML = h || `<div class="msg">Очередь ПК пуста.</div>`;
           return;
         }
       } catch {}
-      srvOnline = false; $('srv-dot').classList.remove('online'); renderOfflineTracker();
+      srvOnline = false; $('srv-dot').classList.remove('online'); $('srv-lbl').textContent = 'Облако ТГ'; renderOfflineTracker();
     }
 
     function renderOfflineTracker() {
-      $('tasks-box').innerHTML = locTasks.length ? locTasks.map(t => `<div class="task-card"><b>${t.title}</b><div style="font-size:11px;color:var(--accent);margin-top:4px;">📡 ${t.stage} (Прогресс в чате бота)</div></div>`).join('') : `<div class="msg">Активен облачный мост Telegram.</div>`;
+      $('tasks-box').innerHTML = locTasks.length ? locTasks.map(t => `<div class="task-card"><b>${t.title}</b><div style="font-size:11px;color:var(--cyan);margin-top:4px;">📡 ${t.stage} (Прогресс в чате бота)</div></div>`).join('') : `<div class="msg">Активен облачный мост Telegram.</div>`;
     }
     window.ctrlJob = async (job_id, action) => { await fetch(`${srvUrl}/api/control`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({job_id, action}) }); pingServer(); };
     $('ping-btn').onclick = pingServer;
     $('clear-tasks').onclick = () => { locTasks = []; store.set('vg_tasks', []); pingServer(); };
 
-    // 9. Рекомендации и Списки
     function addInterest(m, w) {
       if (!m?.title) return;
       const root = m.title.replace(/\(\d{4}\)/g, '').split(/[:—\-–.|]/)[0].replace(/\b(\d+|I|II|III|IV|V|Часть|Сезон|Фильм)\b.*$/i, '').trim();
@@ -689,19 +1201,19 @@
       store.set('vg_taste', taste = taste.slice(0, 10));
     }
 
-    async function renderRecs() {
-      const box = $('shelves'); box.innerHTML = `<div class="msg">Подбираем полки...</div>`;
-      const rows = taste.length ? [
-        { t: `🎬 Франшиза и сиквелы: «${taste[0].root}»`, q: taste[0].root },
-        ...(taste[1] ? [{ t: `🔥 Похожее: «${taste[1].root}»`, q: taste[1].root }] : []),
+    async function renderRecs(customQ = '') {
+      const box = $('shelves'); box.innerHTML = `<div class="msg">Собираем персональные полки...</div>`;
+      const rows = customQ ? [{ t: `🎬 Подборка: ${customQ}`, q: customQ }] : (taste.length ? [
+        { t: `🎬 Все части и сиквелы: «${taste[0].root}»`, q: taste[0].root },
+        ...(taste[1] ? [{ t: `🔥 Похожее на «${taste[1].root}»`, q: taste[1].root }] : []),
         { t: `✨ Лучшее в жанре: ${taste[0].genre}`, q: taste[0].genre }
-      ] : [{ t: `🌌 Звёздные войны`, q: `Звёздные войны` }, { t: `🏆 Дюна`, q: `Дюна` }];
+      ] : [{ t: `🌌 Вселенная Звёздных войн`, q: `Звёздные войны` }, { t: `🏆 Мировые хиты`, q: `Дюна` }]);
       box.innerHTML = '';
       for (const r of rows) {
         const items = await queryCatalog(r.q); if (!items.length) continue;
-        const sec = document.createElement('div'); sec.style.marginBottom = '18px';
-        sec.innerHTML = `<b style="font-size:14px;display:block;margin-bottom:8px;">${r.t}</b><div class="shelf-row"></div>`;
-        renderGrid(items.slice(0, 10), sec.querySelector('.shelf-row'));
+        const sec = document.createElement('div'); sec.style.marginBottom = '22px';
+        sec.innerHTML = `<div class="sec-head" style="margin:0 0 10px;"><h2>${r.t}</h2></div><div class="grid"></div>`;
+        renderGrid(items.slice(0, 10), sec.querySelector('.grid'));
         box.appendChild(sec);
       }
     }
